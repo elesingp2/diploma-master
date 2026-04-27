@@ -113,7 +113,7 @@ def make_figure(out_pdf: Path, out_png: Path) -> None:
     # Figure layout: keep only panels (c) and (d).
     # ------------------------------------------------------------------
     fig, (ax_c, ax_d) = plt.subplots(
-        1, 2, figsize=(15.5, 4.8), gridspec_kw={"wspace": 0.27},
+        1, 2, figsize=(13.5, 4.2), gridspec_kw={"wspace": 0.24},
         constrained_layout=True,
     )
 
@@ -121,7 +121,7 @@ def make_figure(out_pdf: Path, out_png: Path) -> None:
     # Panel (c): integrand snapshot at t = t*
     # =========================================================
     # Plot P(s) faintly across the whole horizon
-    ax_c.plot(t, P, color="#E65100", lw=1.4, alpha=0.45, label=r"$P(s)$")
+    ax_c.plot(t, P, color="#E65100", lw=1.5, alpha=0.55, label="мощность")
 
     # Plot K_D(t* - s) reflected & shifted, for s in [0, t*]
     # Scale K_shifted so that its peak matches plot scale (purely visual)
@@ -129,89 +129,67 @@ def make_figure(out_pdf: Path, out_png: Path) -> None:
     K_full_shifted = np.zeros_like(t)
     K_full_shifted[: idx_star + 1] = K_shifted
     ax_c.plot(t, K_full_shifted * k_visual_scale, color="#0D47A1", lw=2.0,
-              label=r"$K_D(t^{*}-s)$ (отражённое ядро)")
+              label="сдвинутое ядро")
 
     # Shaded integrand
     integrand_full = np.zeros_like(t)
     integrand_full[: idx_star + 1] = integrand
     integrand_visual_scale = (P_AMP * 0.95) / max(integrand.max(), 1e-9)
     ax_c.fill_between(t, 0, integrand_full * integrand_visual_scale,
-                      color="#7B1FA2", alpha=0.55, lw=0,
-                      label=r"произведение $K_D(t^{*}-s)\,P(s)$")
+                      color="#7B1FA2", alpha=0.40, lw=0,
+                      label="вклад в интеграл")
 
     # Mark t*
     ax_c.axvline(t_star_actual, color="#212121", ls="--", lw=1.2, alpha=0.85)
-    ax_c.text(t_star_actual + 1.5, 1.02 * P_AMP, r"$t=t^{*}=%.0f$ мс" % t_star_actual,
+    ax_c.text(t_star_actual + 1.5, 1.02 * P_AMP, r"$t^{*}$",
               fontsize=10, color="#212121")
 
     # Causality shading: future of t*
-    ax_c.axvspan(t_star_actual, T_MAX, color="#ECEFF1", alpha=0.6, lw=0)
-    ax_c.text(0.5 * (t_star_actual + T_MAX), 0.96 * P_AMP,
-              "будущее $t^{*}$ — не входит в свёртку\n(причинность)",
-              fontsize=9, ha="center", va="top", color="#37474F", style="italic")
-
-    # Annotate the integral value
-    ax_c.text(0.02, 0.97,
-              r"$I_D(t^{*})=\int_0^{t^{*}}\!K_D(t^{*}-s)P(s)\,ds=%.3f$"
-              % I_D_star + "\n"
-              + r"$\rho_D(t^{*})=-I_D(t^{*})=%.3f$" % rho_D_star,
-              transform=ax_c.transAxes, ha="left", va="top",
-              fontsize=10, color="#4A148C",
-              bbox=dict(boxstyle="round,pad=0.35", facecolor="white",
-                        edgecolor="#7B1FA2", alpha=0.92))
+    ax_c.axvspan(t_star_actual, T_MAX, color="#ECEFF1", alpha=0.55, lw=0)
+    ax_c.text(0.5 * (t_star_actual + T_MAX), 1.04 * P_AMP,
+              "будущее", fontsize=9, ha="center", va="top",
+              color="#455A64")
 
     ax_c.set_xlim(0, T_MAX)
     ax_c.set_ylim(0, 1.18 * P_AMP)
-    ax_c.set_xlabel(r"время $s$, мс")
-    ax_c.set_ylabel("отн. ед. (визуальный масштаб)")
-    ax_c.set_title(r"(в) Снимок свёртки в момент $t^{*}$: ядро отражено и сдвинуто на $P(s)$")
-    ax_c.grid(True, ls=":", alpha=0.45)
-    ax_c.legend(loc="upper right", fontsize=9, framealpha=0.95,
-                bbox_to_anchor=(0.66, 0.78))
+    ax_c.set_xlabel("время, мс")
+    ax_c.set_ylabel("отн. ед.")
+    ax_c.set_title(r"(в) Наложение в момент $t^{*}$")
+    ax_c.grid(True, ls=":", alpha=0.28)
+    ax_c.legend(loc="upper right", fontsize=9, framealpha=0.92)
 
     # =========================================================
     # Panel (d): output rho_D(t) vs quasi-static
     # =========================================================
     ax_d.plot(t, rho_qs, color="#9E9E9E", lw=2.0, ls="--",
-              label=r"квазистатика $\rho_D^{\mathrm{qs}}=-\kappa_D^{\mathrm{st}}P(t)$")
+              label="без памяти")
     ax_d.plot(t, rho_mem, color="#0D47A1", lw=2.4,
-              label=r"память $\rho_D(t)=-\int_0^{t}K_D(t-s)P(s)\,ds$")
-    ax_d.fill_between(t, rho_qs, rho_mem, where=(rho_mem < rho_qs),
-                      color="#FF8A80", alpha=0.35, lw=0,
-                      label="избыток памяти над квазистатикой")
-    ax_d.fill_between(t, rho_qs, rho_mem, where=(rho_mem >= rho_qs),
-                      color="#80CBC4", alpha=0.35, lw=0)
+              label="с памятью")
 
     # Mark t*
     ax_d.axvline(t_star_actual, color="#212121", ls="--", lw=1.2, alpha=0.85)
-    ax_d.scatter([t_star_actual], [rho_D_star], color="#0D47A1",
-                 s=70, zorder=5, edgecolor="white", lw=1.4)
-    ax_d.annotate(r"$\rho_D(t^{*})=%.3f$" % rho_D_star,
-                  xy=(t_star_actual, rho_D_star),
-                  xytext=(t_star_actual + 18, rho_D_star - 0.12),
-                  fontsize=10, color="#0D47A1",
-                  arrowprops=dict(arrowstyle="-|>", color="#0D47A1", lw=1.0))
+    ax_d.text(t_star_actual + 1.5, 0.0, r"$t^{*}$",
+              fontsize=10, color="#212121", va="top")
 
     # Highlight the long memory tail
-    ax_d.annotate("длинный хвост памяти:\n квазистатика уже занулилась,\n "
-                  r"а $\rho_D$ помнит прошлый импульс",
+    ax_d.annotate("хвост памяти",
                   xy=(140, rho_mem[int(140 / DT)]),
-                  xytext=(95, -0.7),
+                  xytext=(92, -0.66),
                   fontsize=9.5, color="#37474F",
                   arrowprops=dict(arrowstyle="-|>", color="#37474F", lw=1.0,
                                   connectionstyle="arc3,rad=-0.15"))
 
     ax_d.set_xlim(0, T_MAX)
     ax_d.set_ylim(min(rho_mem.min(), rho_qs.min()) * 1.18, 0.05)
-    ax_d.set_xlabel(r"время $t$, мс")
-    ax_d.set_ylabel(r"$\rho_D(t)$, отн. ед.")
-    ax_d.set_title(r"(г) Выход модели: память против квазистатики")
-    ax_d.grid(True, ls=":", alpha=0.45)
+    ax_d.set_xlabel("время, мс")
+    ax_d.set_ylabel("реактивность, отн. ед.")
+    ax_d.set_title("(г) Отклик реактивности")
+    ax_d.grid(True, ls=":", alpha=0.28)
     ax_d.legend(loc="lower right", fontsize=9.5, framealpha=0.95)
 
     fig.suptitle(
-        r"Свёртка как память твэла: $\rho_D(t)=-\int_0^{t}K_D(t-s)\,P(s)\,ds$",
-        fontsize=14, y=0.995,
+        "Свёртка как память твэла",
+        fontsize=13.5, y=0.995,
     )
 
     FIGURES.mkdir(parents=True, exist_ok=True)
