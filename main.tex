@@ -1,6 +1,17 @@
 % !TEX program = xelatex
 \documentclass[12pt]{article}
-\usepackage{fontspec}
+\usepackage{iftex}
+\ifPDFTeX
+    \usepackage[T2A]{fontenc}
+    \usepackage[utf8]{inputenc}
+\else
+    \usepackage{fontspec}
+    \IfFontExistsTF{CMU Serif}
+        {\setmainfont{CMU Serif}}
+        {\IfFontExistsTF{Times New Roman}
+            {\setmainfont{Times New Roman}}
+            {\setmainfont{TeX Gyre Termes}}}
+\fi
 \usepackage[russian]{babel}
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -10,9 +21,6 @@
 \usepackage{geometry}
 \usepackage{hyperref}
 
-\IfFontExistsTF{CMU Serif}
-    {\setmainfont{CMU Serif}}
-    {\setmainfont{Times New Roman}}
 \geometry{left=3cm, right=3cm, top=2cm, bottom=2cm}
 \hypersetup{colorlinks=true, linkcolor=black, citecolor=black, urlcolor=black}
 \sloppy
