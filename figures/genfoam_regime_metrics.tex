@@ -1,6 +1,6 @@
 \begin{table}[H]
     \centering
-    \caption{Численная диагностика проверочного GeN-Foam расчёта. Значение $\mathcal W$ пока является proxy-оценкой по полю \texttt{heatFlux.structure} и должно быть заменено на интеграл $Q_{fw}(t)$ по поверхности теплообмена.}
+    \caption{Численная диагностика проверочного GeN-Foam расчёта. Тепловой выход вычислен как sub-scale surface integral $Q_{fw}=\sum_i q_i''a_{v,i}V_i$ по полю \texttt{heatFlux.structure} модели \texttt{nuclearFuelPin}.}
     \label{tab:genfoamRegimeMetrics}
     \begin{tabular}{>{\raggedright\arraybackslash}p{0.52\textwidth}>{\raggedright\arraybackslash}p{0.33\textwidth}}
         \hline
@@ -12,7 +12,8 @@
         $\max\Delta T_f$ & 0.147 K\\
         $\alpha_{\mathrm{eff}}$ & -0.300 pcm/K\\
         $E_{\mathrm{pulse}}$ & 23.87 kJ\\
-        $\mathcal W_{\mathrm{proxy}}(500\ \mathrm{ms})$ & 0.032\\
+        $\mathcal W(500\ \mathrm{ms})$ & 0.032\\
+        $t_{10\%}$ по $E_w/E_{\mathrm{pulse}}$ & ---\\
         \hline
     \end{tabular}
 \end{table}
