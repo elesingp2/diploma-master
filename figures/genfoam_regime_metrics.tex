@@ -1,19 +1,19 @@
 \begin{table}[H]
     \centering
-    \caption{Численная диагностика проверочного GeN-Foam расчёта. Тепловой выход вычислен как sub-scale surface integral $Q_{fw}=\sum_i q_i''a_{v,i}V_i$ по полю \texttt{heatFlux.structure} модели \texttt{nuclearFuelPin}.}
+    \caption{Численная диагностика проверочного GeN-Foam расчёта. Тепловой выход вычислен как подсеточный поверхностный интеграл $Q_{fw}=\sum_i q_i''a_{v,i}V_i$ по полю \texttt{heatFlux.structure} модели \texttt{nuclearFuelPin}.}
     \label{tab:genfoamRegimeMetrics}
     \begin{tabular}{>{\raggedright\arraybackslash}p{0.52\textwidth}>{\raggedright\arraybackslash}p{0.33\textwidth}}
         \hline
-        Классификация режима & externally forced weak-coupled transient\\
+        Классификация режима & слабосвязанный внешне вынужденный переходный процесс\\
         $\rho_{\mathrm{ext}}^{\max}$ & 57.67 pcm\\
         $P_{\max}/P_0$ & 1.251 при $t=8.0$ ms\\
         $\max|\Delta\rho_{f}|$ & 0.0442 pcm\\
         $\mathcal D=\max|\Delta\rho_f|/\rho_{\mathrm{ext}}^{\max}$ & $7.66\cdot 10^{-4}$\\
         $\max\Delta T_f$ & 0.147 K\\
         $\alpha_{\mathrm{eff}}$ & -0.300 pcm/K\\
-        $E_{\mathrm{pulse}}$ & 23.87 kJ\\
+        $E_{\text{имп}}$ & 23.87 kJ\\
         $\mathcal W(500\ \mathrm{ms})$ & 0.032\\
-        $t_{10\%}$ по $E_w/E_{\mathrm{pulse}}$ & ---\\
+        $t_{10\%}$ по $E_w/E_{\text{имп}}$ & ---\\
         \hline
     \end{tabular}
 \end{table}

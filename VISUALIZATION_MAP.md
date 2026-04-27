@@ -48,6 +48,7 @@ python3 "/Users/elesingeorge/Desktop/Диплом Магистратура/openf
 | `fig:fuelPinAnatomy` | `figures/fig7_fuel_pin_anatomy.pdf`, `figures/fig7_fuel_pin_anatomy.png` | `main.tex:947` | исходный `.py` не найден в проекте | Файл создан Matplotlib 3.10.8, но скрипт генерации отсутствует. |
 | `fig:energyPartition` | `figures/fig8_energy_partition.pdf`, `figures/fig8_energy_partition.png` | `main.tex:956` | `scripts/generate_physics_figures.py`, `make_fig8_energy_partition()`; альтернативно `scripts/make_fig8_energy_partition.py` | Распределение энергии деления. Осторожно: два скрипта пишут один и тот же файл. |
 | `fig:thermalPropagationOverview` | `figures/fig9_thermal_propagation.pdf`, `figures/fig9_thermal_propagation.png` | `main.tex:965` | `scripts/generate_physics_figures.py`, `make_fig9_thermal_propagation()` | Тепловая диффузия, задержка воды, сравнение `K_D(t)` и `H_fw(t)`. |
+| `fig:thermalRadialRelaxation` | `figures/fig14_thermal_radial_relaxation.pdf`, `figures/fig14_thermal_radial_relaxation.png` | `main.tex:1262` | `scripts/make_fig_thermal_radial_relaxation.py` | Численное решение радиального уравнения теплопроводности в твэле (UO2 + He gap + Zr) после импульса мощности. (а) профили `ΔT_f(r,t)` с метками `√(α_f t)`; (б) разделение энергии между топливом, оболочкой и водой в log-времени, окна `K_D` и `H_fw`. |
 
 ## Источники данных для GeN-Foam
 
