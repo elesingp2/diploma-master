@@ -1,0 +1,18 @@
+\begin{table}[H]
+    \centering
+    \caption{Численная диагностика проверочного GeN-Foam расчёта. Значение $\mathcal W$ пока является proxy-оценкой по полю \texttt{heatFlux.structure} и должно быть заменено на интеграл $Q_{fw}(t)$ по поверхности теплообмена.}
+    \label{tab:genfoamRegimeMetrics}
+    \begin{tabular}{>{\raggedright\arraybackslash}p{0.52\textwidth}>{\raggedright\arraybackslash}p{0.33\textwidth}}
+        \hline
+        Классификация режима & externally forced weak-coupled transient\\
+        $\rho_{\mathrm{ext}}^{\max}$ & 57.67 pcm\\
+        $P_{\max}/P_0$ & 1.251 при $t=8.0$ ms\\
+        $\max|\Delta\rho_{f}|$ & 0.0442 pcm\\
+        $\mathcal D=\max|\Delta\rho_f|/\rho_{\mathrm{ext}}^{\max}$ & $7.66\cdot 10^{-4}$\\
+        $\max\Delta T_f$ & 0.147 K\\
+        $\alpha_{\mathrm{eff}}$ & -0.300 pcm/K\\
+        $E_{\mathrm{pulse}}$ & 23.87 kJ\\
+        $\mathcal W_{\mathrm{proxy}}(500\ \mathrm{ms})$ & 0.032\\
+        \hline
+    \end{tabular}
+\end{table}
