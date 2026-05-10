@@ -106,7 +106,7 @@ def make_figure(out_pdf: Path, out_png: Path) -> None:
     s_arr = t[: idx_star + 1]
     K_shifted = kernel(t_star_actual - s_arr)
     integrand = K_shifted * P[: idx_star + 1]
-    I_D_star = np.trapezoid(integrand, s_arr)
+    I_D_star = np.trapz(integrand, s_arr)
     rho_D_star = -I_D_star
 
     # ------------------------------------------------------------------
