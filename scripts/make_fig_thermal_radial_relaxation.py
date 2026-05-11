@@ -1,8 +1,8 @@
-"""Generate fig14_thermal_radial_relaxation.
+"""Generate fig14_thermal_radial_relaxation for the active thesis text.
 
-The script solves a 1D radial heat equation for a simplified UO2-gap-Zr fuel
-pin after a uniform fuel pulse and plots radial relaxation plus energy
-partition between fuel, cladding, and coolant.
+The script solves a compact 1D radial heat equation for a simplified
+UO2-gap-Zr fuel pin after a uniform fuel pulse and plots the thermal lag
+between fuel, cladding, and the external water/steam side.
 """
 from __future__ import annotations
 
@@ -196,7 +196,7 @@ def make_figure(out_path: Path, png_path: Path) -> None:
 
     rc_mm = sim["rc"] * 1e3
 
-    fig, axes = plt.subplots(1, 2, figsize=(15.5, 6.6),
+    fig, axes = plt.subplots(1, 2, figsize=(12.4, 4.8),
                              gridspec_kw={"width_ratios": [1.15, 1.0]})
 
     # =========================================================
@@ -210,16 +210,28 @@ def make_figure(out_path: Path, png_path: Path) -> None:
     ax.axvspan(R_GAP_OUT * 1e3, R_CLAD_OUT * 1e3, color="#CFD8DC", alpha=0.85, zorder=0)
     ax.axvspan(R_CLAD_OUT * 1e3, 5.6, color="#BBDEFB", alpha=0.55, zorder=0)
 
-    # Material labels (inside axis, top edge)
-    for x, lbl in [
-        (R_FUEL * 1e3 / 2, r"UO$_2$"),
-        ((R_FUEL + R_GAP_OUT) * 1e3 / 2, "He gap"),
-        ((R_GAP_OUT + R_CLAD_OUT) * 1e3 / 2, "Zr"),
-        ((R_CLAD_OUT * 1e3 + 5.6) / 2, r"H$_2$O"),
+    # Material labels (inside axis, top edge).  The gas gap is too thin for
+    # a horizontal label, so it is marked vertically near the interface.
+    for x, lbl, fs, ha in [
+        (R_FUEL * 1e3 / 2, r"UO$_2$", 10.0, "center"),
+        ((R_GAP_OUT + R_CLAD_OUT) * 1e3 / 2, "оболочка", 8.3, "center"),
+        (5.32, r"H$_2$O/пар", 8.3, "right"),
     ]:
         ax.text(x, 0.965, lbl, transform=ax.get_xaxis_transform(),
-                ha="center", va="top", fontsize=10, color="#263238",
+                ha=ha, va="top", fontsize=fs, color="#263238",
                 fontweight="bold")
+    ax.text(
+        (R_FUEL + R_GAP_OUT) * 1e3 / 2,
+        0.92,
+        "зазор",
+        transform=ax.get_xaxis_transform(),
+        ha="center",
+        va="top",
+        rotation=90,
+        fontsize=8.5,
+        color="#5d4a00",
+        fontweight="bold",
+    )
 
     # Initial pulse profile (uniform DT in fuel, 0 elsewhere)
     T0_curve = np.where(sim["tag"] == 0, 200.0, 0.0)
@@ -260,9 +272,9 @@ def make_figure(out_path: Path, png_path: Path) -> None:
     ax.set_xlabel("радиус r, мм", fontsize=11)
     ax.set_ylabel(r"$\Delta T_f(r,t)$, К  (отклонение от равновесия с водой)",
                   fontsize=11)
-    ax.set_title(r"(а) Радиальная релаксация теплового следа $\Delta T_f(r,t)$",
+    ax.set_title(r"(а) Радиальная релаксация $\Delta T(r,t)$",
                  fontsize=12, pad=10)
-    ax.legend(loc="upper right", fontsize=9, framealpha=0.95, ncol=1)
+    ax.legend(loc="lower left", fontsize=8.4, framealpha=0.95, ncol=1)
     ax.grid(True, ls=":", alpha=0.45)
 
     # =========================================================
@@ -290,12 +302,12 @@ def make_figure(out_path: Path, png_path: Path) -> None:
              rotation=90, va="center", ha="right", fontsize=10, color="#212121")
 
     # Annotate Doppler vs water "windows"
-    ax2.annotate(r"окно $K_D(t)$:" "\n" r"объёмный нагрев топлива",
+    ax2.annotate("ранняя стадия:\nэнергия в топливе",
                  xy=(3e-3, 0.97), xytext=(2e-4, 0.62),
                  fontsize=10, color="#BF360C", ha="left",
                  arrowprops=dict(arrowstyle="-|>", color="#BF360C", lw=1.1,
                                  connectionstyle="arc3,rad=0.15"))
-    ax2.annotate(r"окно $H_{fw}(t)$:" "\n" r"выход энергии к воде",
+    ax2.annotate("задержанная стадия:\nвыход к воде/пару",
                  xy=(5.0, 0.78), xytext=(0.6, 0.20),
                  fontsize=10, color="#0D47A1", ha="left",
                  arrowprops=dict(arrowstyle="-|>", color="#0D47A1", lw=1.1,
@@ -305,14 +317,13 @@ def make_figure(out_path: Path, png_path: Path) -> None:
     ax2.set_ylim(0, 1.0)
     ax2.set_xlabel("время t, с (логарифмическая шкала)", fontsize=11)
     ax2.set_ylabel("доля энергии импульса", fontsize=11)
-    ax2.set_title(r"(б) Разделение энергии импульса по объёмам",
+    ax2.set_title("(б) Разделение энергии импульса",
                   fontsize=12, pad=10)
     ax2.legend(loc="upper left", fontsize=9, framealpha=0.95)
     ax2.grid(True, which="both", ls=":", alpha=0.45)
 
     fig.suptitle(
-        "Эволюция теплового следа в твэле после импульса мощности: "
-        "доплеровский и водный каналы живут на разных временах",
+        "Тепловая задержка между топливом и паровой областью после импульса",
         fontsize=13.5, y=0.995,
     )
 
