@@ -1,6 +1,6 @@
 # Карта визуализаций диплома
 
-Активные рисунки в `main.tex` сейчас сведены к теме ТВЭЛ--вода/пар: расчетная геометрия, радиальная тепловая релаксация и синхронизированный pipeline из ноутбука `notebooks/01_tvel_water_pipeline.ipynb`. Графики pipeline выводятся отдельными файлами: одна картинка отвечает на один расчетный вопрос. Старые доплеровские, memory-kernel и GeN-Foam diagnostic-графики больше не подключаются в диплом.
+Активные рисунки в `main.tex` сейчас сведены к теме ТВЭЛ--вода/пар: расчетная геометрия, радиальная тепловая релаксация, V1-пайплайн из `notebooks/01_tvel_water_pipeline.ipynb` и V2-пайплайн материаловедческого отбора из `notebooks/02_tvel_materials_pipeline_v2.ipynb`. Графики pipeline выводятся отдельными файлами: одна картинка отвечает на один расчетный вопрос. Старые доплеровские, memory-kernel и GeN-Foam diagnostic-графики больше не подключаются в диплом.
 
 ## Быстрая регенерация
 
@@ -16,7 +16,7 @@ make pipeline-figures
 python3 scripts/export_pipeline_figures.py
 ```
 
-Скрипт пересчитывает notebook-сценарии через `src/thesis_modeling/pipeline_export.py`, обновляет PNG и заново пишет `figures/pipeline_report.tex`. Цель `make pdf` вызывает `make pipeline-figures` автоматически.
+Скрипт пересчитывает notebook-сценарии через `src/thesis_modeling/pipeline_export.py` и `src/thesis_modeling/pipeline_v2_export.py`, обновляет PNG и заново пишет `figures/pipeline_report.tex` и `figures/pipeline_v2_report.tex`. Цель `make pdf` вызывает `make pipeline-figures` автоматически.
 
 ## Активные рисунки и таблицы
 
@@ -31,8 +31,9 @@ python3 scripts/export_pipeline_figures.py
 | `fig:pipelineEnergyBalance` | `figures/pipeline_energy_balance.png` | `figures/pipeline_report.tex` | `scripts/export_pipeline_figures.py` |
 | `fig:pipelineSteamState` | `figures/pipeline_steam_state.png` | `figures/pipeline_report.tex` | `scripts/export_pipeline_figures.py` |
 | `fig:pipelineChemistryWindow` | `figures/pipeline_chemistry_window.png` | `figures/pipeline_report.tex` | `scripts/export_pipeline_figures.py` |
-| `fig:pipelineCandidateWindow` | `figures/pipeline_candidate_window.png` | `figures/pipeline_report.tex` | `scripts/export_pipeline_figures.py` |
+| `fig:pipelineV2MaterialWindow` | `figures/pipeline_v2_material_window.png` | `figures/pipeline_v2_report.tex` | `scripts/export_pipeline_figures.py` |
 | `tab:pipelineScenarioReport` | `figures/pipeline_report.tex` | `main.tex` через `\input` | `scripts/export_pipeline_figures.py` |
+| `tab:pipelineV2MaterialScenarios` | `figures/pipeline_v2_report.tex` | `main.tex` через `\input` | `scripts/export_pipeline_figures.py` |
 
 ## Старые рабочие материалы
 
