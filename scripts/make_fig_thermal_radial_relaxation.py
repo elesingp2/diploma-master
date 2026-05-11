@@ -1,23 +1,8 @@
 """Generate fig14_thermal_radial_relaxation.
 
-Solves the 1D radial heat equation in cylindrical coordinates for a typical
-LWR fuel pin (UO2 fuel + He gap thermal resistance + Zr cladding).  An
-instantaneous power pulse deposits uniform volumetric energy in the fuel at
-t = 0.  We then propagate the resulting thermal "footprint" forward in time
-and plot:
-
-    (a) radial temperature profiles T(r, t) at logarithmically spaced
-        snapshots, with the characteristic diffusion length sqrt(alpha_f * t)
-        marked on top of the geometry;
-
-    (b) the cumulative energy partition between fuel, cladding and coolant,
-        which directly illustrates why the volume-weighted Doppler kernel
-        K_D(t) and the surface-weighted heat-flux kernel H_fw(t) live on
-        different timescales.
-
-The scheme is a fully explicit FTCS finite-difference on a non-uniform grid
-with conservative cylindrical fluxes.  Material properties are typical UO2
-and Zr-4 values.  No SciPy required.
+The script solves a 1D radial heat equation for a simplified UO2-gap-Zr fuel
+pin after a uniform fuel pulse and plots radial relaxation plus energy
+partition between fuel, cladding, and coolant.
 """
 from __future__ import annotations
 

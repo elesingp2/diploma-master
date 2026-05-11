@@ -1,20 +1,9 @@
-"""Generate fig15_memory_convolution: a pedagogical visualisation of the
-central formula of the thesis,
+"""Generate fig15_memory_convolution for the memory-kernel section.
 
         rho_D(t) = - int_0^t K_D(t - s) * P(s) ds.
 
-Only the two explanatory panels used in the thesis figure are retained:
-
-    (c) snapshot of the integrand at t = t*: K_D(t* - s) is reflected and
-        shifted onto the P(s) axis, the integrand product is shaded, and
-        the area under the shading is exactly I_D(t*);
-    (d) full output: memory response rho_D(t) vs the quasi-static
-        approximation rho_D^qs(t) = -kappa_D^st * P(t).  The phase delay
-        and the long memory tail are visible at a glance.
-
-All numbers are in arbitrary but consistent units; the visualisation is
-purely pedagogical and matches the LaTeX formula in section "Модель памяти
-твэла".  No SciPy required.
+The figure uses dimensionless values and is intended for the thesis text,
+not as a calibrated fuel-pin calculation.
 """
 from __future__ import annotations
 
@@ -38,10 +27,7 @@ plt.rcParams.update(
     }
 )
 
-# ---------------------------------------------------------------------------
-# Model parameters (pedagogical, consistent units).
-# Time in ms; amplitudes in arbitrary normalised units.
-# ---------------------------------------------------------------------------
+# Time is measured in ms; amplitudes are dimensionless.
 T_MAX = 200.0          # plotting horizon, ms
 DT = 0.05              # integration step, ms
 SIGMA_P = 5.0          # power pulse width, ms

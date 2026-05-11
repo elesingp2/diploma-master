@@ -1,6 +1,17 @@
 .DS_Store
 build/
+overleafmcp/
+__pycache__/
+*.pyc
 *.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.run.xml
+*.synctex.gz
+*.xdv
 *.log
 *.out
 *.toc
