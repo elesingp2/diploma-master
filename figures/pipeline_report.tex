@@ -1,0 +1,37 @@
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/pipeline_tvel_overview.png}
+    \caption{Синхронизированный график из ноутбука \texttt{01\_tvel\_water\_pipeline.ipynb}: расчетная геометрия, история температур, поле \(T(r,t)\) и радиальные профили для базового сценария \(UO_2\)--Zircaloy с паровой прослойкой толщиной 100\,\(\mu\mathrm{m}\).}
+    \label{fig:pipelineTvelOverview}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{figures/pipeline_water_energy.png}
+    \caption{Энергетический баланс базового сценария и состояние приповерхностной паровой прослойки. Расчет показывает, что при \(E_{\mathrm{imp}}=250\,\mathrm{kJ/m}\) энергия в основном остается в топливе и оболочке, а химическое температурное окно для термолиза не достигается.}
+    \label{fig:pipelineWaterEnergy}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{figures/pipeline_chemistry_window.png}
+    \caption{Проверка температурного окна для базового сценария: паровая прослойка остается ниже порога \(T^*_{\mathrm{diss}}\), а оболочка подходит к своему материальному ограничению раньше, чем возникает полезный термолизный режим.}
+    \label{fig:pipelineChemistryWindow}
+\end{figure}
+
+\begin{table}[H]
+    \centering
+    \caption{Сводка расчетного pipeline для базового сценария и контрфактической высокотемпературной пары материалов.}
+    \label{tab:pipelineScenarioReport}
+    \small
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{@{}p{3.7cm}rrrrccc@{}}
+    \hline
+    Сценарий & \(E_{\mathrm{imp}}\), kJ/m & \(T_s^{\max}\), K & \(T_f^{\max}\), K & \(T_c^{\max}\), K & \(T_s>T^*_{\mathrm{diss}}\) & \(M_f,M_c>0\) & \(m_{H_2}^{\max}\), g/m \\
+    \hline
+    UO2 / Zircaloy baseline & 250 & 1977 & 2278 & 1977 & нет & да & 0.00 \\
+HfC surrogate / Tungsten candidate & 480 & 3301 & 4141 & 3301 & да & да & 9.58e-05 \\
+    \hline
+    \end{tabular}
+    }
+\end{table}
