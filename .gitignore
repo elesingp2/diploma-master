@@ -1,6 +1,13 @@
 .DS_Store
+.codex/
+.venv/
 build/
 overleafmcp/
+external/
+materials/
+main.pdf
+*.egg-info/
+.ipynb_checkpoints/
 __pycache__/
 *.pyc
 *.aux
