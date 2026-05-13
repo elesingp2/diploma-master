@@ -208,7 +208,7 @@ def _format_bool(value: bool) -> str:
 def _format_float(value: float, digits: int = 2) -> str:
     if abs(value) < 1e-3 and value != 0.0:
         mantissa, exponent = f"{value:.2e}".split("e")
-        return rf"{float(mantissa):.{digits}f}\cdot10^{{{int(exponent)}}}"
+        return rf"\ensuremath{{{float(mantissa):.{digits}f}\cdot10^{{{int(exponent)}}}}}"
     return f"{value:.{digits}f}"
 
 
