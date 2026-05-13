@@ -224,7 +224,10 @@ def _validate_required_columns(columns: Mapping[str, np.ndarray]) -> None:
 
 
 def _fuel_volume_m3_per_m(scenario: Scenario) -> float:
-    return float(np.pi * scenario.geometry.fuel_radius_m**2)
+    geometry = scenario.geometry
+    return float(
+        np.pi * (geometry.fuel_radius_m**2 - geometry.fuel_inner_radius_m**2)
+    )
 
 
 def _clad_volume_m3_per_m(scenario: Scenario) -> float:
@@ -255,7 +258,7 @@ def _minimal_radial_profile(
     geometry = scenario.geometry
     r_m = np.array(
         [
-            0.0,
+            geometry.fuel_inner_radius_m,
             geometry.fuel_radius_m,
             geometry.gap_outer_radius_m,
             geometry.clad_outer_radius_m,

@@ -26,6 +26,7 @@ class Material:
 
 @dataclass(frozen=True)
 class PinGeometry:
+    fuel_inner_radius_m: float = 0.0
     fuel_radius_m: float = 4.00e-3
     gap_outer_radius_m: float = 4.08e-3
     clad_outer_radius_m: float = 4.68e-3
@@ -235,7 +236,12 @@ def scenario_summary(scenario: Scenario) -> dict[str, float | str]:
     water = scenario.water
     summary: dict[str, float | str] = {
         "name": scenario.name,
+        "fuel_inner_radius_mm": geometry.fuel_inner_radius_m * 1e3,
         "fuel_radius_mm": geometry.fuel_radius_m * 1e3,
+        "fuel_active_thickness_mm": (
+            geometry.fuel_radius_m - geometry.fuel_inner_radius_m
+        )
+        * 1e3,
         "gap_thickness_um": (geometry.gap_outer_radius_m - geometry.fuel_radius_m)
         * 1e6,
         "clad_thickness_mm": (geometry.clad_outer_radius_m - geometry.gap_outer_radius_m)
