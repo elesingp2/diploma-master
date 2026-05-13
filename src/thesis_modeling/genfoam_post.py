@@ -109,6 +109,7 @@ def canonicalize_thermal_series(
     clad_outer_k = normalized["clad_outer_k"]
     clad_inner_k = normalized.get("clad_inner_k", clad_outer_k)
 
+    use_series_reference = source == "genfoam"
     if "water_energy_j_per_m" in normalized:
         water_energy_j_per_m = np.maximum(normalized["water_energy_j_per_m"], 0.0)
     elif "clad_to_water_heat_flux_w_m2" in normalized:
@@ -122,12 +123,25 @@ def canonicalize_thermal_series(
             normalized["water_temperature_k"],
             scenario,
         )
+        if use_series_reference:
+            water_energy_j_per_m = np.maximum(
+                water_energy_j_per_m - water_energy_j_per_m[0],
+                0.0,
+            )
     else:
         raise ValueError(
             "Ряд GeN-Foam должен содержать water_temperature_k, "
             "water_energy_j_per_m или clad_to_water_heat_flux_w_m2."
         )
 
+    fuel_reference_k = (
+        float(fuel_average_k[0]) if use_series_reference else scenario.initial_solid_temperature_k
+    )
+    clad_reference_k = (
+        float(0.5 * (clad_inner_k[0] + clad_outer_k[0]))
+        if use_series_reference
+        else scenario.initial_solid_temperature_k
+    )
     pulse_energy_j_per_m = normalized.get(
         "pulse_energy_j_per_m",
         pulse_energy_series_j_per_m(time_s, scenario),
@@ -136,7 +150,7 @@ def canonicalize_thermal_series(
         "fuel_energy_j_per_m",
         _solid_energy_from_average_temperature(
             fuel_average_k,
-            scenario.initial_solid_temperature_k,
+            fuel_reference_k,
             _fuel_volume_m3_per_m(scenario),
             scenario.fuel.volumetric_heat_capacity_j_m3_k,
         ),
@@ -145,7 +159,7 @@ def canonicalize_thermal_series(
         "clad_energy_j_per_m",
         _solid_energy_from_average_temperature(
             0.5 * (clad_inner_k + clad_outer_k),
-            scenario.initial_solid_temperature_k,
+            clad_reference_k,
             _clad_volume_m3_per_m(scenario),
             scenario.clad.volumetric_heat_capacity_j_m3_k,
         ),
@@ -174,6 +188,8 @@ def canonicalize_thermal_series(
     }
     if "pressure_pa" in normalized:
         result["pressure_pa"] = normalized["pressure_pa"]
+    if "genfoam_total_power_w" in normalized:
+        result["genfoam_total_power_w"] = normalized["genfoam_total_power_w"]
     result.update(vectorized_water_state(water_energy_j_per_m, scenario.water))
 
     if "water_temperature_k" in normalized:

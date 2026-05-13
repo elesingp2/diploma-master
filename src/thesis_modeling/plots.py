@@ -103,6 +103,21 @@ def _mark_pulse_end(ax, result: dict[str, np.ndarray]) -> None:
     )
 
 
+def _draw_reference_level(
+    ax,
+    y_value: float,
+    *,
+    label: str,
+    color: str,
+    style: str,
+) -> str | None:
+    y_min, y_max = ax.get_ylim()
+    if y_min <= y_value <= y_max:
+        ax.axhline(y_value, color=color, ls=style, lw=1.15, label=label)
+        return None
+    return f"{label}: {y_value:.0f} K"
+
+
 def plot_pin_cross_section(scenario: Scenario, ax=None):
     if ax is None:
         _, ax = plt.subplots(figsize=(6.2, 5.2))
@@ -276,40 +291,68 @@ def plot_temperature_history(result: dict[str, np.ndarray], ax=None):
         lw=2.0,
         label=fluid_label,
     )
-    ax.axhline(
-        scenario.water.saturation_temperature_k,
-        color="#2166ac",
-        ls=":",
-        lw=1.2,
-        label="начальная T слоя" if scenario.steam_layer is not None else "Tsat воды",
+    temperature_stack = np.vstack(
+        [
+            result["fuel_center_k"],
+            result["fuel_surface_k"],
+            result["clad_outer_k"],
+            result["water_temperature_k"],
+            np.full_like(t, scenario.water.saturation_temperature_k),
+        ]
     )
-    ax.axhline(
-        scenario.clad.limit_temperature_k,
-        color=LINE_COLORS["clad_outer"],
-        ls="--",
-        lw=1.1,
-        label=f"предел оболочки {scenario.clad.name}",
+    data_min = float(np.min(temperature_stack))
+    data_max = float(np.max(temperature_stack))
+    margin = max(15.0, 0.16 * (data_max - data_min))
+    ax.set_ylim(
+        max(0.0, data_min - margin),
+        data_max + margin,
     )
-    ax.axhline(
-        scenario.chemistry_threshold_k,
-        color="#542788",
-        ls="-.",
-        lw=1.2,
-        label=r"$T^*_{\mathrm{дис}}$",
-    )
+    out_of_scale = []
+    for item in [
+        (
+            scenario.water.saturation_temperature_k,
+            "начальная T слоя" if scenario.steam_layer is not None else "Tsat воды",
+            "#2166ac",
+            ":",
+        ),
+        (
+            scenario.clad.limit_temperature_k,
+            f"предел оболочки {scenario.clad.name}",
+            LINE_COLORS["clad_outer"],
+            "--",
+        ),
+        (
+            scenario.chemistry_threshold_k,
+            r"$T^*_{\mathrm{дис}}$",
+            "#542788",
+            "-.",
+        ),
+    ]:
+        label = _draw_reference_level(
+            ax,
+            item[0],
+            label=item[1],
+            color=item[2],
+            style=item[3],
+        )
+        if label is not None:
+            out_of_scale.append(label)
+    if out_of_scale:
+        ax.text(
+            0.99,
+            0.98,
+            "выше шкалы:\n" + "\n".join(out_of_scale),
+            transform=ax.transAxes,
+            ha="right",
+            va="top",
+            fontsize=8.0,
+            color="#253044",
+            bbox={"facecolor": "white", "edgecolor": "#cbd5e1", "alpha": 0.92},
+        )
     _mark_pulse_end(ax, result)
-    ax.set_title("V1: температуры и предельные уровни")
+    ax.set_title("V1: температуры GeN-Foam, рабочая шкала")
     ax.set_xlabel("время, с")
     ax.set_ylabel("температура, K")
-    ax.set_ylim(
-        scenario.initial_solid_temperature_k - 30.0,
-        max(
-            scenario.chemistry_threshold_k,
-            result["fuel_center_k"].max(),
-            result["water_temperature_k"].max(),
-        )
-        * 1.05,
-    )
     _style_axis(ax)
     ax.legend(frameon=True, fontsize=8.0, ncol=2)
     return ax
