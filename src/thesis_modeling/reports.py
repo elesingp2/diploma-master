@@ -166,6 +166,8 @@ def build_scenario_report(
     layer_thickness_um = np.nan
     if scenario.steam_layer is not None:
         layer_thickness_um = scenario.steam_layer.thickness_m * 1e6
+    if scenario.annular_water_layer is not None:
+        layer_thickness_um = scenario.annular_water_layer.thickness_m * 1e6
 
     return {
         "case": label,

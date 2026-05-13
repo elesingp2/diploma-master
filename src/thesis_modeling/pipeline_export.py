@@ -25,14 +25,15 @@ from .plots import (
 )
 from .reports import build_energy_funnel, build_scenario_report
 from .scenarios import (
+    AnnularWaterLayer,
     Material,
     PinGeometry,
     Pulse,
-    SteamLayer,
-    build_steam_layer_scenario,
+    build_annular_water_scenario,
     scenario_summary,
 )
 from .validation import validate_physical_consistency
+from .wall_coupled_water import apply_wall_coupled_water_model
 
 
 PIPELINE_VERSION = "zircaloy-v1"
@@ -89,19 +90,23 @@ def build_notebook_baseline_scenario():
         duration_s=0.20,
         shape="square",
     )
-    steam_layer = SteamLayer(
+    water_layer = AnnularWaterLayer(
         thickness_m=1.0e-4,
         pressure_pa=15.5e6,
         initial_temperature_k=620.0,
-        heat_transfer_coefficient_w_m2_k=5.0e3,
+        saturation_temperature_k=620.0,
+        liquid_density_kg_m3=650.0,
+        cp_liquid_j_kg_k=6.0e3,
+        latent_heat_j_kg=1.10e6,
         cp_vapor_j_kg_k=2.6e3,
+        wall_temperature_cap=True,
     )
-    return build_steam_layer_scenario(
+    return build_annular_water_scenario(
         geometry=geometry,
         fuel=fuel,
         clad=clad,
         pulse=pulse,
-        steam_layer=steam_layer,
+        annular_water_layer=water_layer,
         gap_conductance_w_m2_k=5.0e3,
         t_end_s=20.0,
         chemistry_threshold_k=3273.15,
@@ -124,6 +129,7 @@ def run_scenario(
         )
     try:
         result = load_genfoam_case(case_path, scenario)
+        result = apply_wall_coupled_water_model(result, scenario)
         chemistry = compute_equilibrium_hydrogen(result, scenario)
     except (FileNotFoundError, NotADirectoryError) as exc:
         if not allow_python_fallback:
@@ -322,9 +328,9 @@ def _write_pipeline_tex(path: Path, runs: dict[str, ScenarioRun]) -> None:
         else r"m_{H_2}^{proxy}"
     )
     threshold_phrase = (
-        rf"Паровая прослойка достигает порога \(T^*_{{\mathrm{{дис}}}}={summary['chemistry_threshold_k']:.0f}\,\mathrm{{K}}\)"
+        rf"Водно-паровой слой достигает порога \(T^*_{{\mathrm{{дис}}}}={summary['chemistry_threshold_k']:.0f}\,\mathrm{{K}}\)"
         if bool(baseline_report["threshold_reached"])
-        else rf"Паровая прослойка не достигает порога \(T^*_{{\mathrm{{дис}}}}={summary['chemistry_threshold_k']:.0f}\,\mathrm{{K}}\)"
+        else rf"Водно-паровой слой не достигает порога \(T^*_{{\mathrm{{дис}}}}={summary['chemistry_threshold_k']:.0f}\,\mathrm{{K}}\)"
     )
     clad_phrase = (
         "оболочка остается ниже принятого температурного предела"
@@ -342,7 +348,7 @@ def _write_pipeline_tex(path: Path, runs: dict[str, ScenarioRun]) -> None:
         final_reading = (
             "Итог версии 1 является отрицательным по термохимическому критерию: "
             "в принятом тепловом ряду топливо и оболочка остаются ниже своих "
-            "пределов, но паровая прослойка не выходит к выбранному порогу "
+            "пределов, но водно-паровой слой не выходит к выбранному порогу "
             r"\(T^*_{\mathrm{дис}}\)."
         )
     else:
@@ -353,15 +359,13 @@ def _write_pipeline_tex(path: Path, runs: dict[str, ScenarioRun]) -> None:
 
     text = rf"""\subsection{{Версия 1 пайплайна: \texorpdfstring{{\(UO_2\)--Zircaloy}}{{UO2--Zircaloy}}}}
 
-Эта версия фиксирует штатную пару \(UO_2\)--Zircaloy и использует {thermal_source_text}; идентификатор расчета -- \texttt{{{PIPELINE_VERSION}}}. Рассматривается один метр твэла с радиусом топлива \(R_f={summary["fuel_radius_mm"]:.2f}\,\mathrm{{мм}}\), зазором \({summary["gap_thickness_um"]:.0f}\,\mu\mathrm{{m}}\), оболочкой толщиной \({summary["clad_thickness_mm"]:.2f}\,\mathrm{{мм}}\) и приповерхностной паровой прослойкой \(\delta_s={summary["steam_layer_thickness_um"]:.0f}\,\mu\mathrm{{m}}\) при \(p_s={summary["steam_layer_pressure_mpa"]:.1f}\,\mathrm{{МПа}}\). Входной импульс равен \(E_{{\mathrm{{вв}}}}={summary["pulse_energy_kj_per_m"]:.0f}\,\mathrm{{кДж/м}}\), а для оболочки используется допустимый предел \(T_{{\mathrm{{lim}},c}}={float(baseline_report["clad_limit_k"]):.0f}\,\mathrm{{K}}\), а не температура плавления.
+Эта версия фиксирует штатную пару \(UO_2\)--Zircaloy и использует {thermal_source_text}; идентификатор расчета -- \texttt{{{PIPELINE_VERSION}}}. Рассматривается один метр твэла с радиусом топлива \(R_f={summary["fuel_radius_mm"]:.2f}\,\mathrm{{мм}}\), зазором \({summary["gap_thickness_um"]:.0f}\,\mu\mathrm{{m}}\), оболочкой толщиной \({summary["clad_thickness_mm"]:.2f}\,\mathrm{{мм}}\) и приповерхностным слоем воды толщиной \(\delta_w={summary["water_layer_thickness_um"]:.0f}\,\mu\mathrm{{m}}\) при \(p_w={summary["water_layer_pressure_mpa"]:.1f}\,\mathrm{{МПа}}\). Входной импульс равен \(E_{{\mathrm{{вв}}}}={summary["pulse_energy_kj_per_m"]:.0f}\,\mathrm{{кДж/м}}\), а для оболочки используется допустимый предел \(T_{{\mathrm{{lim}},c}}={float(baseline_report["clad_limit_k"]):.0f}\,\mathrm{{K}}\), а не температура плавления.
 
-Масса паровой прослойки считается из кольцевого контрольного объема:
+Масса воды у оболочки считается из кольцевого контрольного объема:
 \[
-m_s'=\rho_s \pi\left[(R_c+\delta_s)^2-R_c^2\right],
-\qquad
-\rho_s=\frac{{p_s}}{{R_vT_{{s,0}}}}.
+m_w'=\rho_l \pi\left[(R_c+\delta_w)^2-R_c^2\right].
 \]
-Для выбранных параметров \(m_s'\approx{float(summary["steam_layer_mass_g_per_m"]):.3f}\,\mathrm{{г/м}}\). Поэтому результат нужно читать как локальную верхнюю оценку для тонкого слоя пара, а не как расчет всего теплоносителя канала.
+Для выбранных параметров \(m_w'\approx{float(summary["water_layer_mass_g_per_m"]):.3f}\,\mathrm{{г/м}}\). Сначала этот слой испаряется, затем сухой пар может перегреваться. В расчет введено физическое ограничение \(T_s(t)\le T_c(t)\): пар, нагреваемый только через оболочку, не может быть горячее наружной стенки.
 
 \begin{{figure}}[H]
     \centering
@@ -376,12 +380,12 @@ m_s'=\rho_s \pi\left[(R_c+\delta_s)^2-R_c^2\right],
 \qquad
 j\in\{{f,c,s\}}.
 \]
-Здесь \(E_s\) означает не весь тепловой поток через оболочку, а энергию, накопленную в выбранном контрольном объеме пара. В версии 1 паровая область получает только \(\varepsilon_s\approx{float(baseline_report["energy_to_water_percent"]):.2f}\,\%\) импульса. Это соответствует отношению теплоемкости тонкой прослойки \(C_s'\approx{steam_heat_capacity_j_k_m:.3f}\,\mathrm{{Дж/(К\cdot м)}}\) к суммарной теплоемкости топлива, оболочки и пара: \(C_s'/(C_f'+C_c'+C_s')\approx{steam_heat_capacity_share_percent:.2f}\,\%\).
+Здесь \(E_s\) означает энергию в локальном водно-паровом объеме около оболочки после нагрева, испарения и возможного перегрева. В версии 1 водно-паровая область получает \(\varepsilon_s\approx{float(baseline_report["energy_to_water_percent"]):.3f}\,\%\) импульса после ограничения температурой стенки. Теплоемкость сухого пара в этом объеме равна \(C_s'\approx{steam_heat_capacity_j_k_m:.3f}\,\mathrm{{Дж/(К\cdot м)}}\), но до перегрева надо также покрыть скрытую теплоту испарения.
 
 \begin{{figure}}[H]
     \centering
     \includegraphics[width=0.82\textwidth]{{figures/pipeline_energy_balance.png}}
-    \caption{{Доли энергии импульса, накопленные в топливе, оболочке и паровой прослойке. Основная часть энергии остается в твердой части твэла.}}
+    \caption{{Доли энергии импульса, накопленные в топливе, оболочке и водно-паровом слое. Основная часть энергии остается в твердой части твэла или не попадает в локальный водный объем при выбранном ограничении стенкой.}}
     \label{{fig:pipelineEnergyBalance}}
 \end{{figure}}
 
@@ -403,10 +407,10 @@ j\in\{{f,c,s\}}.
     }}
 \end{{table}}
 
-Итоговая энергия в паровой прослойке составляет только \(E_s\approx{float(energy_funnel["steam_energy_kj_per_m"]):.3f}\,\mathrm{{кДж/м}}\), или \({float(energy_funnel["steam_energy_percent_of_pulse"]):.3f}\,\%\) от импульса. До последнего расчетного момента с положительным запасом оболочки эта величина составляет \(E_s\approx{float(energy_funnel_before_limits["steam_energy_kj_per_m"]):.3f}\,\mathrm{{кДж/м}}\), или \({float(energy_funnel_before_limits["steam_energy_percent_of_pulse"]):.3f}\,\%\). Малая доля энергии в паровой области является следствием двух последовательных фильтров: за выбранное время через топливо и зазор проходит ограниченная часть импульса, а почти вся энергия, прошедшая через зазор, сначала нагревает оболочку.
+Итоговая энергия в водно-паровом слое составляет \(E_s\approx{float(energy_funnel["steam_energy_kj_per_m"]):.3f}\,\mathrm{{кДж/м}}\), или \({float(energy_funnel["steam_energy_percent_of_pulse"]):.3f}\,\%\) от импульса. До последнего расчетного момента с положительным запасом оболочки эта величина составляет \(E_s\approx{float(energy_funnel_before_limits["steam_energy_kj_per_m"]):.3f}\,\mathrm{{кДж/м}}\), или \({float(energy_funnel_before_limits["steam_energy_percent_of_pulse"]):.3f}\,\%\). Главный ограничитель здесь не полная энергия импульса, а температура наружной оболочки: при \(T_c\ll T^*_{{\mathrm{{дис}}}}\) перегретый пар также остается далеко ниже порога диссоциации.
 
 {chemistry_model_text}
-До выхода топлива и оболочки за принятые пределы паровая прослойка успевает нагреться до \(T_s\approx{max_gas_before_limits_k:.0f}\,\mathrm{{K}}\). Полный расчетный максимум оболочки дает запас \(M_{{\mathrm{{об}}}}=T_{{\mathrm{{lim}},c}}-T_c^{{\max}}\approx{clad_limit_margin_k:.0f}\,\mathrm{{K}}\). Топливо в этой точке еще не является первым ограничением, поскольку \(M_f\approx{fuel_margin_k:.0f}\,\mathrm{{K}}\).
+До выхода топлива и оболочки за принятые пределы водно-паровой слой успевает нагреться до \(T_s\approx{max_gas_before_limits_k:.0f}\,\mathrm{{K}}\). Полный расчетный максимум оболочки дает запас \(M_{{\mathrm{{об}}}}=T_{{\mathrm{{lim}},c}}-T_c^{{\max}}\approx{clad_limit_margin_k:.0f}\,\mathrm{{K}}\). Топливо в этой точке еще не является первым ограничением, поскольку \(M_f\approx{fuel_margin_k:.0f}\,\mathrm{{K}}\).
 
 \begin{{table}}[H]
     \centering

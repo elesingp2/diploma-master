@@ -22,6 +22,7 @@ matplotlib.use("Agg")
 
 from thesis_modeling.pipeline_export import export_pipeline_artifacts  # noqa: E402
 from thesis_modeling.pipeline_v2_export import export_pipeline_v2_artifacts  # noqa: E402
+from thesis_modeling.pipeline_v3_export import export_pipeline_v3_artifacts  # noqa: E402
 
 
 def _env_flag(name: str, default: bool = False) -> bool:
@@ -42,7 +43,10 @@ def main() -> None:
         allow_python_fallback=allow_all_fallback
         or _env_flag("ALLOW_V2_PYTHON_FALLBACK", default=True),
     )
-    print("Wrote pipeline v1/v2 figures and LaTeX reports")
+    export_pipeline_v3_artifacts(
+        ROOT / "figures",
+    )
+    print("Wrote pipeline v1/v2/v3 figures and LaTeX reports")
 
 
 if __name__ == "__main__":

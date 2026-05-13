@@ -90,6 +90,30 @@ def water_state_from_energy(
     )
 
 
+def water_energy_for_temperature_j_per_m(
+    temperature_k: float,
+    water: WaterInventory,
+) -> float:
+    """Возвращает энергию воды/пара при полном испарении выше насыщения."""
+    mass = water.mass_kg_per_m
+    if mass <= 0.0:
+        return 0.0
+    temperature = max(float(temperature_k), water.initial_temperature_k)
+    heat_to_saturation = mass * water.cp_liquid_j_kg_k * max(
+        water.saturation_temperature_k - water.initial_temperature_k,
+        0.0,
+    )
+    if temperature <= water.saturation_temperature_k:
+        return mass * water.cp_liquid_j_kg_k * (
+            temperature - water.initial_temperature_k
+        )
+    return (
+        heat_to_saturation
+        + mass * water.latent_heat_j_kg
+        + mass * water.cp_vapor_j_kg_k * (temperature - water.saturation_temperature_k)
+    )
+
+
 def vectorized_water_state(
     energy_added_j_per_m: np.ndarray,
     water: WaterInventory,

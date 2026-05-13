@@ -21,6 +21,7 @@ from .pipeline_export import (
 from .reports import build_scenario_report
 from .scenarios import Material, Scenario
 from .validation import validate_physical_consistency
+from .wall_coupled_water import apply_wall_coupled_water_model
 
 
 @dataclass(frozen=True)
@@ -96,6 +97,7 @@ def run_pipeline_v2(*, allow_python_fallback: bool = False) -> list[PipelineV2Ru
         scenario = replace(scenario, genfoam_case_path=spec.genfoam_case_path)
         try:
             result = load_genfoam_case(spec.genfoam_case_path, scenario)
+            result = apply_wall_coupled_water_model(result, scenario)
             chemistry = compute_equilibrium_hydrogen(result, scenario)
         except (FileNotFoundError, NotADirectoryError) as exc:
             if not allow_python_fallback:
@@ -223,16 +225,16 @@ def _write_pipeline_v2_tex(path: Path, runs: list[PipelineV2Run]) -> None:
 
     text = rf"""\subsection{{Материаловедческий отбор для парового окна}}
 
-Отборочный расчет отвечает уже не на вопрос о штатной циркониевой оболочке, а на вопрос о том, какой класс материалов нужен для реакторной схемы, способной подвести энергию к тонкой паровой области и открыть путь к ненулевому выходу \(H_2\). Входами остаются геометрия одного метра твэла, давление \(15.5\,\mathrm{{МПа}}\), толщина паровой прослойки и импульс \(E_{{\mathrm{{вв}}}}\). Основные выходы не меняются: \(T_s^{{\max}}\), запас топлива и оболочки до пределов и {chemistry_summary}
+Отборочный расчет отвечает уже не на вопрос о штатной циркониевой оболочке, а на вопрос о том, какой класс материалов нужен для реакторной схемы, способной подвести энергию к тонкому слою воды у оболочки и открыть путь к ненулевому выходу \(H_2\). Входами остаются геометрия одного метра твэла, давление \(15.5\,\mathrm{{МПа}}\), толщина водного слоя и импульс \(E_{{\mathrm{{вв}}}}\). Основные выходы не меняются: \(T_s^{{\max}}\), запас топлива и оболочки до пределов и {chemistry_summary}
 
 {source_summary}
 
-Этот отборочный слой не заменяет химико-механическую квалификацию материалов. \(ZrC\)-центричная ветка введена как более правдоподобное исследовательское направление после отсева \(UO_2\), \(UN\), \(UC\), Zircaloy, Mo и SiC/SiC. \(HfC\)--W оставлен как оптимистический тепловой контрфакт. В текущем импульсном расчете GeN-Foam он также не открывает высокотемпературное паровое окно; это полезный отрицательный результат, а не предложение материала из-за гафния и парового окисления вольфрама \cite{{UshakovCarbides2019,PetersonZrC2023,SabourinTungstenSteam2011}}.
+Этот отборочный слой не заменяет химико-механическую квалификацию материалов. \(ZrC\)-центричная ветка введена как более правдоподобное исследовательское направление после отсева \(UO_2\), \(UN\), \(UC\), Zircaloy, Mo и SiC/SiC. \(HfC\)--W оставлен как оптимистический тепловой контрфакт. В текущем импульсном расчете GeN-Foam он также не открывает высокотемпературное водно-паровое окно; это полезный отрицательный результат, а не предложение материала из-за гафния и парового окисления вольфрама \cite{{UshakovCarbides2019,PetersonZrC2023,SabourinTungstenSteam2011}}.
 
 \begin{{figure}}[H]
     \centering
     \includegraphics[width=0.74\textwidth]{{figures/pipeline_v2_material_window.png}}
-    \caption{{Отдельные расчеты GeN-Foam для новых материалов: сравнение высокотемпературных суррогатов по максимуму температуры паровой прослойки. Текущий импульс не выводит паровую область к температуре диссоциации.}}
+    \caption{{Отдельные расчеты GeN-Foam для новых материалов: сравнение высокотемпературных суррогатов по максимуму температуры водно-парового слоя у оболочки. Текущий импульс не выводит паровую фазу к температуре диссоциации.}}
     \label{{fig:pipelineV2MaterialWindow}}
 \end{{figure}}
 

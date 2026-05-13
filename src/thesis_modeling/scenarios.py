@@ -63,6 +63,19 @@ class SteamLayer:
 
 
 @dataclass(frozen=True)
+class AnnularWaterLayer:
+    thickness_m: float = 1.0e-4
+    pressure_pa: float = 15.5e6
+    initial_temperature_k: float = 620.0
+    saturation_temperature_k: float = 620.0
+    liquid_density_kg_m3: float = 650.0
+    cp_liquid_j_kg_k: float = 6.0e3
+    latent_heat_j_kg: float = 1.10e6
+    cp_vapor_j_kg_k: float = 2.6e3
+    wall_temperature_cap: bool = True
+
+
+@dataclass(frozen=True)
 class Scenario:
     name: str
     geometry: PinGeometry
@@ -75,6 +88,7 @@ class Scenario:
     t_end_s: float = 20.0
     chemistry_threshold_k: float = 3273.15
     steam_layer: SteamLayer | None = None
+    annular_water_layer: AnnularWaterLayer | None = None
     genfoam_case_path: str | None = None
 
 
@@ -118,6 +132,19 @@ def steam_layer_mass_kg_per_m(geometry: PinGeometry, layer: SteamLayer) -> float
     return density_kg_m3 * volume_m3_per_m
 
 
+def annular_water_mass_kg_per_m(
+    geometry: PinGeometry,
+    layer: AnnularWaterLayer,
+) -> float:
+    if layer.thickness_m <= 0.0:
+        raise ValueError("Annular water layer thickness must be positive.")
+    if layer.liquid_density_kg_m3 <= 0.0:
+        raise ValueError("Liquid water density must be positive.")
+    outer_radius = geometry.clad_outer_radius_m + layer.thickness_m
+    volume_m3_per_m = math.pi * (outer_radius**2 - geometry.clad_outer_radius_m**2)
+    return layer.liquid_density_kg_m3 * volume_m3_per_m
+
+
 def build_steam_layer_scenario(
     *,
     geometry: PinGeometry | None = None,
@@ -159,6 +186,46 @@ def build_steam_layer_scenario(
     )
 
 
+def build_annular_water_scenario(
+    *,
+    geometry: PinGeometry | None = None,
+    fuel: Material = DEFAULT_FUEL,
+    clad: Material = DEFAULT_CLAD,
+    pulse: Pulse | None = None,
+    annular_water_layer: AnnularWaterLayer | None = None,
+    gap_conductance_w_m2_k: float = 5.0e3,
+    t_end_s: float = 20.0,
+    chemistry_threshold_k: float = 3273.15,
+    genfoam_case_path: str | None = None,
+    name: str = "annular_water_thermolysis",
+) -> Scenario:
+    geometry = geometry or PinGeometry()
+    layer = annular_water_layer or AnnularWaterLayer()
+    layer_mass = annular_water_mass_kg_per_m(geometry, layer)
+    return Scenario(
+        name=name,
+        geometry=geometry,
+        fuel=fuel,
+        clad=clad,
+        water=WaterInventory(
+            mass_kg_per_m=layer_mass,
+            initial_temperature_k=layer.initial_temperature_k,
+            saturation_temperature_k=layer.saturation_temperature_k,
+            pressure_pa=layer.pressure_pa,
+            cp_liquid_j_kg_k=layer.cp_liquid_j_kg_k,
+            latent_heat_j_kg=layer.latent_heat_j_kg,
+            cp_vapor_j_kg_k=layer.cp_vapor_j_kg_k,
+        ),
+        pulse=pulse or Pulse(),
+        gap_conductance_w_m2_k=gap_conductance_w_m2_k,
+        initial_solid_temperature_k=layer.initial_temperature_k,
+        t_end_s=t_end_s,
+        chemistry_threshold_k=chemistry_threshold_k,
+        annular_water_layer=layer,
+        genfoam_case_path=genfoam_case_path,
+    )
+
+
 def steam_layer_scenario() -> Scenario:
     return build_steam_layer_scenario()
 
@@ -191,6 +258,16 @@ def scenario_summary(scenario: Scenario) -> dict[str, float | str]:
                 "steam_layer_thickness_um": scenario.steam_layer.thickness_m * 1e6,
                 "steam_layer_mass_g_per_m": water.mass_kg_per_m * 1e3,
                 "steam_layer_pressure_mpa": scenario.steam_layer.pressure_pa / 1e6,
+            }
+        )
+    if scenario.annular_water_layer is not None:
+        summary.update(
+            {
+                "water_layer_thickness_um": scenario.annular_water_layer.thickness_m
+                * 1e6,
+                "water_layer_mass_g_per_m": water.mass_kg_per_m * 1e3,
+                "water_layer_pressure_mpa": scenario.annular_water_layer.pressure_pa
+                / 1e6,
             }
         )
     return summary

@@ -26,6 +26,8 @@ def _style_axis(ax) -> None:
 
 
 def _fluid_label(scenario: Scenario) -> str:
+    if scenario.annular_water_layer is not None:
+        return "вода / пар у оболочки"
     return "газовая прослойка" if scenario.steam_layer is not None else "вода / пар"
 
 
@@ -49,6 +51,17 @@ def _mark_material_regions(ax, scenario: Scenario) -> None:
             geometry.clad_outer_radius_m * 1e3,
             (geometry.clad_outer_radius_m + scenario.steam_layer.thickness_m) * 1e3,
             color=GAS_LAYER_COLOR,
+            alpha=0.24,
+        )
+    if scenario.annular_water_layer is not None:
+        ax.axvspan(
+            geometry.clad_outer_radius_m * 1e3,
+            (
+                geometry.clad_outer_radius_m
+                + scenario.annular_water_layer.thickness_m
+            )
+            * 1e3,
+            color=WATER_COLOR,
             alpha=0.24,
         )
     for radius, label in [
@@ -83,6 +96,22 @@ def _mark_material_regions(ax, scenario: Scenario) -> None:
             rotation=90,
             fontsize=8,
             color="#4d3d00",
+        )
+    if scenario.annular_water_layer is not None:
+        water_outer_radius_mm = (
+            geometry.clad_outer_radius_m + scenario.annular_water_layer.thickness_m
+        ) * 1e3
+        ax.axvline(water_outer_radius_mm, color="#2166ac", lw=0.9, alpha=0.7)
+        ax.text(
+            water_outer_radius_mm,
+            0.98,
+            "вода",
+            transform=ax.get_xaxis_transform(),
+            ha="left",
+            va="top",
+            rotation=90,
+            fontsize=8,
+            color="#17456f",
         )
 
 
@@ -128,6 +157,10 @@ def plot_pin_cross_section(scenario: Scenario, ax=None):
         layer_outer_radius_mm = (
             geometry.clad_outer_radius_m + scenario.steam_layer.thickness_m
         ) * 1e3
+    if scenario.annular_water_layer is not None:
+        layer_outer_radius_mm = (
+            geometry.clad_outer_radius_m + scenario.annular_water_layer.thickness_m
+        ) * 1e3
     water_outer_radius_mm = geometry.clad_outer_radius_m * 1e3 * 1.42
     fuel_radius_mm = geometry.fuel_radius_m * 1e3
     gap_outer_radius_mm = geometry.gap_outer_radius_m * 1e3
@@ -137,7 +170,10 @@ def plot_pin_cross_section(scenario: Scenario, ax=None):
         (water_outer_radius_mm, WATER_COLOR, "вода / пар"),
     ]
     if layer_outer_radius_mm is not None:
-        layers.append((layer_outer_radius_mm, GAS_LAYER_COLOR, "газовая прослойка"))
+        if scenario.annular_water_layer is not None:
+            layers.append((layer_outer_radius_mm, WATER_COLOR, "слой воды"))
+        else:
+            layers.append((layer_outer_radius_mm, GAS_LAYER_COLOR, "газовая прослойка"))
     layers.extend(
         [
             (clad_outer_radius_mm, CLAD_COLOR, "оболочка Zr"),
@@ -227,6 +263,16 @@ def plot_pin_cross_section(scenario: Scenario, ax=None):
     if layer_outer_radius_mm is not None and scenario.steam_layer is not None:
         ax.annotate(
             f"газовая прослойка\nδ = {scenario.steam_layer.thickness_m * 1e6:.0f} мкм",
+            xy=(layer_outer_radius_mm, layer_outer_radius_mm * 0.18),
+            xytext=(-water_outer_radius_mm * 1.52, water_outer_radius_mm * 0.82),
+            arrowprops={"arrowstyle": "->", "lw": 1.0, "color": "#303841"},
+            ha="left",
+            va="center",
+            fontsize=9,
+        )
+    if layer_outer_radius_mm is not None and scenario.annular_water_layer is not None:
+        ax.annotate(
+            f"слой воды\nδ = {scenario.annular_water_layer.thickness_m * 1e6:.0f} мкм",
             xy=(layer_outer_radius_mm, layer_outer_radius_mm * 0.18),
             xytext=(-water_outer_radius_mm * 1.52, water_outer_radius_mm * 0.82),
             arrowprops={"arrowstyle": "->", "lw": 1.0, "color": "#303841"},
@@ -413,11 +459,14 @@ def plot_radial_temperature_map(result: dict[str, np.ndarray], ax=None):
     radius_mm = result["r_m"] * 1e3
     time = result["time_s"]
     profiles = result["temperature_profile_k"]
-    if scenario.steam_layer is not None:
+    if scenario.steam_layer is not None or scenario.annular_water_layer is not None:
         gas_inner_mm = scenario.geometry.clad_outer_radius_m * 1e3
-        gas_outer_mm = (
-            scenario.geometry.clad_outer_radius_m + scenario.steam_layer.thickness_m
-        ) * 1e3
+        layer_thickness_m = (
+            scenario.steam_layer.thickness_m
+            if scenario.steam_layer is not None
+            else scenario.annular_water_layer.thickness_m
+        )
+        gas_outer_mm = (scenario.geometry.clad_outer_radius_m + layer_thickness_m) * 1e3
         gas_radius_mm = np.linspace(gas_inner_mm, gas_outer_mm, 5)[1:]
         radius_mm = np.concatenate([radius_mm, gas_radius_mm])
         gas_profiles = np.repeat(
@@ -513,7 +562,11 @@ def plot_energy_balance(result: dict[str, np.ndarray], ax=None):
         color=LINE_COLORS["water"],
         lw=2.3,
         ls="--",
-        label="в паровой прослойке" if scenario.steam_layer else "в воде/паре",
+        label=(
+            "в воде/паре у оболочки"
+            if scenario.annular_water_layer
+            else "в паровой прослойке" if scenario.steam_layer else "в воде/паре"
+        ),
     )
     peak_water_percent = 100.0 * float(result["water_energy_j_per_m"].max()) / scale
     _mark_pulse_end(ax, result)
@@ -524,7 +577,7 @@ def plot_energy_balance(result: dict[str, np.ndarray], ax=None):
     ax.text(
         0.98,
         0.12,
-        f"макс. в паровой прослойке: {peak_water_percent:.3f}%",
+        f"макс. в воде/паре: {peak_water_percent:.3f}%",
         transform=ax.transAxes,
         ha="right",
         va="center",
@@ -566,7 +619,11 @@ def plot_water_state(result: dict[str, np.ndarray], chemistry=None, ax=None):
             label="порог химии",
         )
     _mark_pulse_end(ax, result)
-    ax.set_title("Состояние газовой прослойки" if scenario.steam_layer else "Состояние воды")
+    ax.set_title(
+        "Состояние воды у оболочки"
+        if scenario.annular_water_layer
+        else "Состояние газовой прослойки" if scenario.steam_layer else "Состояние воды"
+    )
     ax.set_xlabel("время, с")
     ax.set_ylabel("температура, K")
     ax_quality = ax.twinx()
