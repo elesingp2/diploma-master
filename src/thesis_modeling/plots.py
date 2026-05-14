@@ -292,7 +292,7 @@ def plot_pin_cross_section(scenario: Scenario, ax=None):
         fontsize=8.5,
         bbox={"facecolor": "white", "edgecolor": "#c7c7c7", "alpha": 0.88},
     )
-    ax.set_title("Расчетная геометрия ТВЭЛа")
+    ax.set_title("Расчетная геометрия твэла")
     ax.set_aspect("equal")
     limit = water_outer_radius_mm * 1.65
     ax.set_xlim(-limit, limit)
@@ -445,7 +445,7 @@ def plot_radial_temperature_profiles(
 
     ax.set_xlabel("радиус, мм")
     ax.set_ylabel("температура, K")
-    ax.set_title("Радиальные профили температуры в ТВЭЛе")
+    ax.set_title("Радиальные профили температуры в твэле")
     _style_axis(ax)
     ax.legend(frameon=True, fontsize=8.5)
     return ax
@@ -522,7 +522,7 @@ def plot_radial_temperature_map(result: dict[str, np.ndarray], ax=None):
     ax.set_yticklabels([f"{tick:g}" for tick in ticks])
     ax.set_xlabel("радиус, мм")
     ax.set_ylabel("время, с")
-    ax.set_title("Температурное поле T(r, t): ТВЭЛ и газовая прослойка")
+    ax.set_title("Температурное поле T(r, t): твэл и газовая прослойка")
     colorbar = ax.figure.colorbar(image, ax=ax, pad=0.015)
     colorbar.set_label("температура, K")
     _style_axis(ax)
@@ -535,13 +535,6 @@ def plot_energy_balance(result: dict[str, np.ndarray], ax=None):
     t = result["time_s"]
     scenario = result["scenario"]
     scale = max(scenario.pulse.energy_j_per_m, 1.0)
-    ax.plot(
-        t,
-        result["pulse_energy_j_per_m"] / scale,
-        color="#222222",
-        lw=1.5,
-        label="внесенная энергия",
-    )
     ax.plot(
         t,
         result["fuel_energy_j_per_m"] / scale,
@@ -569,14 +562,20 @@ def plot_energy_balance(result: dict[str, np.ndarray], ax=None):
         ),
     )
     peak_water_percent = 100.0 * float(result["water_energy_j_per_m"].max()) / scale
+    max_fraction = max(
+        float(np.max(result["fuel_energy_j_per_m"] / scale)),
+        float(np.max(result["clad_energy_j_per_m"] / scale)),
+        float(np.max(result["water_energy_j_per_m"] / scale)),
+        0.01,
+    )
     _mark_pulse_end(ax, result)
-    ax.set_title("V1: куда уходит энергия импульса")
+    ax.set_title("V1: малые доли энергии у стенки")
     ax.set_xlabel("время, с")
     ax.set_ylabel("доля от энергии импульса")
-    ax.set_ylim(-0.03, 1.05)
+    ax.set_ylim(0.0, min(max_fraction * 1.35, 0.025))
     ax.text(
         0.98,
-        0.12,
+        0.88,
         f"макс. в воде/паре: {peak_water_percent:.3f}%",
         transform=ax.transAxes,
         ha="right",
@@ -586,7 +585,7 @@ def plot_energy_balance(result: dict[str, np.ndarray], ax=None):
         bbox={"facecolor": "white", "edgecolor": "#cbd5e1", "alpha": 0.9},
     )
     _style_axis(ax)
-    ax.legend(frameon=True, fontsize=8.3, loc="center right")
+    ax.legend(frameon=True, fontsize=8.3, loc="upper left")
     return ax
 
 

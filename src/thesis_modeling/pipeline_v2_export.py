@@ -47,7 +47,7 @@ class PipelineV2Run:
 def pipeline_v2_specs() -> list[PipelineV2Spec]:
     return [
         PipelineV2Spec(
-            label=r"\(ZrC\)--W, исследовательский суррогат",
+            label=r"\(\mathrm{ZrC}\)--W, исследовательский суррогат",
             fuel_name="ZrC surrogate",
             clad_name="Tungsten",
             pulse_energy_j_per_m=520e3,
@@ -58,7 +58,7 @@ def pipeline_v2_specs() -> list[PipelineV2Spec]:
             role="более правдоподобная ZrC-центричная ветка; наружный W не квалифицирован по пару",
         ),
         PipelineV2Spec(
-            label=r"\(HfC\)--W, тепловой верхний контрфакт",
+            label=r"\(\mathrm{HfC}\)--W, тепловой верхний контрфакт",
             fuel_name="HfC surrogate",
             clad_name="Tungsten",
             pulse_energy_j_per_m=480e3,
@@ -122,51 +122,46 @@ def run_pipeline_v2(*, allow_python_fallback: bool = False) -> list[PipelineV2Ru
 
 def plot_pipeline_v2_material_window(runs: list[PipelineV2Run]):
     labels = [
-        run.spec.label.replace(r"\(", "").replace(r"\)", "").split(",")[0]
+        run.spec.label.replace(r"\(", "")
+        .replace(r"\)", "")
+        .replace(r"\mathrm{", "")
+        .replace("}", "")
+        .split(",")[0]
         for run in runs
     ]
-    gas_temperatures = [float(run.report["max_gas_k"]) for run in runs]
     threshold = float(runs[0].report["chemistry_threshold_k"])
+    margins = [float(run.report["max_gas_k"]) - threshold for run in runs]
     colors = [
         "#2f6f6d" if bool(run.report["threshold_before_material_limits"]) else "#a95743"
         for run in runs
     ]
 
     fig, ax = plt.subplots(figsize=(6.8, 3.8), constrained_layout=True)
-    ax.bar(labels, gas_temperatures, color=colors, width=0.58)
-    for x, value in enumerate(gas_temperatures):
+    ax.bar(labels, margins, color=colors, width=0.58)
+    for x, value in enumerate(margins):
         ax.text(
             x,
-            value + 0.018 * max(gas_temperatures),
+            value - 80.0,
             f"{value:.0f} K",
             ha="center",
-            va="bottom",
+            va="top",
             fontsize=9,
         )
-    y_top = max(gas_temperatures) * 1.16
-    if threshold <= y_top:
-        ax.axhline(
-            threshold,
-            color="#202020",
-            lw=1.4,
-            ls="--",
-            label=r"$T^*_{\mathrm{дис}}$",
-        )
-        ax.legend(loc="upper left", frameon=False)
-    else:
-        ax.text(
-            0.98,
-            0.08,
-            rf"$T^*_{{\mathrm{{дис}}}}$ = {threshold:.0f} K выше шкалы",
-            transform=ax.transAxes,
-            ha="right",
-            va="bottom",
-            fontsize=8.5,
-            bbox={"facecolor": "white", "edgecolor": "#cbd5e1", "alpha": 0.92},
-        )
-    ax.set_ylim(0, y_top)
-    ax.set_ylabel(r"$T_s^{\max}$, K")
-    ax.set_title("V2: отклик материалов в GeN-Foam")
+    ax.axhline(0.0, color="#202020", lw=1.2, ls="--")
+    ax.text(
+        0.98,
+        0.92,
+        rf"$0 = T^*_{{\mathrm{{дис}}}}={threshold:.0f}$ K",
+        transform=ax.transAxes,
+        ha="right",
+        va="top",
+        fontsize=8.5,
+        bbox={"facecolor": "white", "edgecolor": "#cbd5e1", "alpha": 0.92},
+    )
+    bottom = min(margins) * 1.12
+    ax.set_ylim(bottom, max(120.0, -0.05 * bottom))
+    ax.set_ylabel(r"$\Delta T=T_s^{\max}-T^*_{\mathrm{дис}}$, K")
+    ax.set_title("V2: дефицит до принятого порога")
     ax.grid(axis="y", color="#d6d6d6", lw=0.8)
     ax.tick_params(axis="x", rotation=0)
     return fig
@@ -229,12 +224,12 @@ def _write_pipeline_v2_tex(path: Path, runs: list[PipelineV2Run]) -> None:
 
 {source_summary}
 
-Этот отборочный слой не заменяет химико-механическую квалификацию материалов. \(ZrC\)-центричная ветка введена как более правдоподобное исследовательское направление после отсева \(UO_2\), \(UN\), \(UC\), Zircaloy, Mo и SiC/SiC. \(HfC\)--W оставлен как оптимистический тепловой контрфакт. В текущем импульсном расчете GeN-Foam он также не открывает высокотемпературное водно-паровое окно; это полезный отрицательный результат, а не предложение материала из-за гафния и парового окисления вольфрама \cite{{UshakovCarbides2019,PetersonZrC2023,SabourinTungstenSteam2011}}.
+Этот отборочный слой не заменяет химико-механическую квалификацию материалов. \(\mathrm{{ZrC}}\)-центричная ветка введена как более правдоподобное исследовательское направление после отсева \(\mathrm{{UO_2}}\), \(\mathrm{{UN}}\), \(\mathrm{{UC}}\), Zircaloy, Mo и SiC/SiC. \(\mathrm{{HfC}}\)--W оставлен как оптимистический тепловой контрфакт. В текущем импульсном расчете GeN-Foam он также не открывает высокотемпературное водно-паровое окно; это полезный отрицательный результат, а не предложение материала из-за гафния и парового окисления вольфрама \cite{{UshakovCarbides2019,PetersonZrC2023,SabourinTungstenSteam2011}}.
 
 \begin{{figure}}[H]
     \centering
     \includegraphics[width=0.74\textwidth]{{figures/pipeline_v2_material_window.png}}
-    \caption{{Отдельные расчеты GeN-Foam для новых материалов: сравнение высокотемпературных суррогатов по максимуму температуры водно-парового слоя у оболочки. Текущий импульс не выводит паровую фазу к температуре диссоциации.}}
+    \caption{{Отдельные расчеты GeN-Foam для новых материалов: дефицит максимума водно-парового слоя до принятого порога заметной равновесной доли \(H_2\). Оба варианта остаются далеко ниже целевого уровня.}}
     \label{{fig:pipelineV2MaterialWindow}}
 \end{{figure}}
 
@@ -243,15 +238,13 @@ def _write_pipeline_v2_tex(path: Path, runs: list[PipelineV2Run]) -> None:
     \caption{{Отборочные сценарии для новой материальной структуры.}}
     \label{{tab:pipelineV2MaterialScenarios}}
     \footnotesize
-    \resizebox{{\textwidth}}{{!}}{{%
-    \begin{{tabular}}{{@{{}}p{{4.0cm}}rp{{2.0cm}}p{{2.2cm}}p{{3.0cm}}p{{6.0cm}}@{{}}}}
-    \hline
+    \begin{{tabularx}}{{\textwidth}}{{@{{}}XrrcXX@{{}}}}
+    \toprule
     Сценарий & \(E_{{\mathrm{{вв}}}}\), кДж/м & \(T_s^{{\max}}\), K & Окно до пределов & Класс результата & Роль в дипломе \\
-    \hline
+    \midrule
     {chr(10).join(rows)}
-    \hline
-    \end{{tabular}}
-    }}
+    \bottomrule
+    \end{{tabularx}}
 \end{{table}}
 
 Инженерная трактовка такого расчета остается умеренной: цель диплома -- найти расчетную область, где реакторная система может получить высокотемпературный пар и ненулевую равновесную оценку \(H_2\). Текущий GeN-Foam-прогон показывает, что одна замена материалов без изменения теплогидравлической схемы и подвода энергии не решает задачу. Поэтому следующий расчетный шаг должен менять не только материал, но и геометрию теплопередачи, длительность или пространственную концентрацию энерговыделения.

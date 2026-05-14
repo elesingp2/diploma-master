@@ -157,7 +157,7 @@ def run_notebook_pipeline(
     baseline = build_notebook_baseline_scenario()
     return {
         "baseline": run_scenario(
-            r"\(UO_2\)--Zircaloy, версия 1",
+            r"\(\mathrm{UO_2}\)--Zircaloy, версия 1",
             baseline,
             genfoam_case_path=genfoam_case_path,
             allow_python_fallback=allow_python_fallback,
@@ -357,9 +357,9 @@ def _write_pipeline_tex(path: Path, runs: dict[str, ScenarioRun]) -> None:
             "не подтверждается до нарушения принятого предела топлива или оболочки."
         )
 
-    text = rf"""\subsection{{Версия 1 пайплайна: \texorpdfstring{{\(UO_2\)--Zircaloy}}{{UO2--Zircaloy}}}}
+    text = rf"""\subsection{{Версия 1 расчетной цепочки: \texorpdfstring{{\(\mathrm{{UO_2}}\)--Zircaloy}}{{UO2--Zircaloy}}}}
 
-Эта версия фиксирует штатную пару \(UO_2\)--Zircaloy и использует {thermal_source_text}; идентификатор расчета -- \texttt{{{PIPELINE_VERSION}}}. Рассматривается один метр твэла с радиусом топлива \(R_f={summary["fuel_radius_mm"]:.2f}\,\mathrm{{мм}}\), зазором \({summary["gap_thickness_um"]:.0f}\,\mu\mathrm{{m}}\), оболочкой толщиной \({summary["clad_thickness_mm"]:.2f}\,\mathrm{{мм}}\) и приповерхностным слоем воды толщиной \(\delta_w={summary["water_layer_thickness_um"]:.0f}\,\mu\mathrm{{m}}\) при \(p_w={summary["water_layer_pressure_mpa"]:.1f}\,\mathrm{{МПа}}\). Входной импульс равен \(E_{{\mathrm{{вв}}}}={summary["pulse_energy_kj_per_m"]:.0f}\,\mathrm{{кДж/м}}\), а для оболочки используется допустимый предел \(T_{{\mathrm{{lim}},c}}={float(baseline_report["clad_limit_k"]):.0f}\,\mathrm{{K}}\), а не температура плавления.
+Эта версия фиксирует штатную пару \(\mathrm{{UO_2}}\)--Zircaloy и использует {thermal_source_text}; идентификатор расчета -- \texttt{{{PIPELINE_VERSION}}}. Рассматривается один метр твэла с радиусом топлива \(R_f={summary["fuel_radius_mm"]:.2f}\,\mathrm{{мм}}\), зазором \({summary["gap_thickness_um"]:.0f}\,\mu\mathrm{{m}}\), оболочкой толщиной \({summary["clad_thickness_mm"]:.2f}\,\mathrm{{мм}}\) и приповерхностным слоем воды толщиной \(\delta_w={summary["water_layer_thickness_um"]:.0f}\,\mu\mathrm{{m}}\) при \(p_w={summary["water_layer_pressure_mpa"]:.1f}\,\mathrm{{МПа}}\). Входной импульс равен \(E_{{\mathrm{{вв}}}}={summary["pulse_energy_kj_per_m"]:.0f}\,\mathrm{{кДж/м}}\), а для оболочки используется допустимый предел \(T_{{\mathrm{{lim}},c}}={float(baseline_report["clad_limit_k"]):.0f}\,\mathrm{{K}}\), а не температура плавления.
 
 Масса воды у оболочки считается из кольцевого контрольного объема:
 \[
@@ -370,7 +370,7 @@ m_w'=\rho_l \pi\left[(R_c+\delta_w)^2-R_c^2\right].
 \begin{{figure}}[H]
     \centering
     \includegraphics[width=0.82\textwidth]{{figures/pipeline_temperature_history.png}}
-    \caption{{Версия 1: история температур \(UO_2\)--Zircaloy при \(E_{{\mathrm{{вв}}}}={summary["pulse_energy_kj_per_m"]:.0f}\,\mathrm{{кДж/м}}\). {threshold_phrase}, а {clad_phrase}.}}
+    \caption{{Версия 1: история температур \(\mathrm{{UO_2}}\)--Zircaloy при \(E_{{\mathrm{{вв}}}}={summary["pulse_energy_kj_per_m"]:.0f}\,\mathrm{{кДж/м}}\). {threshold_phrase}, а {clad_phrase}.}}
     \label{{fig:pipelineTemperatureHistory}}
 \end{{figure}}
 
@@ -385,7 +385,7 @@ j\in\{{f,c,s\}}.
 \begin{{figure}}[H]
     \centering
     \includegraphics[width=0.82\textwidth]{{figures/pipeline_energy_balance.png}}
-    \caption{{Доли энергии импульса, накопленные в топливе, оболочке и водно-паровом слое. Основная часть энергии остается в твердой части твэла или не попадает в локальный водный объем при выбранном ограничении стенкой.}}
+    \caption{{Малые доли энергии импульса, накопленные в топливе, оболочке и водно-паровом слое. Полная внесенная энергия не показана отдельной линией, чтобы не скрывать долю воды/пара порядка одного процента.}}
     \label{{fig:pipelineEnergyBalance}}
 \end{{figure}}
 
@@ -396,36 +396,32 @@ j\in\{{f,c,s\}}.
     \caption{{Энергетическая воронка версии 1 к концу расчета. Величины нормированы на \(E_{{\mathrm{{вв}}}}={summary["pulse_energy_kj_per_m"]:.0f}\,\mathrm{{кДж/м}}\).}}
     \label{{tab:pipelineEnergyFunnel}}
     \small
-    \resizebox{{\textwidth}}{{!}}{{%
-    \begin{{tabular}}{{@{{}}p{{4.2cm}}rrrrr@{{}}}}
-    \hline
+    \begin{{tabularx}}{{\textwidth}}{{@{{}}Xrrrrr@{{}}}}
+    \toprule
     Звено & Накоплено или не прошло, кДж/м & от \(E_{{\mathrm{{вв}}}}\), \% & от входа звена, \% & Прошло дальше, кДж/м & от \(E_{{\mathrm{{вв}}}}\), \% \\
-    \hline
+    \midrule
 {funnel_rows}
-    \hline
-    \end{{tabular}}
-    }}
+    \bottomrule
+    \end{{tabularx}}
 \end{{table}}
 
-Итоговая энергия в водно-паровом слое составляет \(E_s\approx{float(energy_funnel["steam_energy_kj_per_m"]):.3f}\,\mathrm{{кДж/м}}\), или \({float(energy_funnel["steam_energy_percent_of_pulse"]):.3f}\,\%\) от импульса. До последнего расчетного момента с положительным запасом оболочки эта величина составляет \(E_s\approx{float(energy_funnel_before_limits["steam_energy_kj_per_m"]):.3f}\,\mathrm{{кДж/м}}\), или \({float(energy_funnel_before_limits["steam_energy_percent_of_pulse"]):.3f}\,\%\). Главный ограничитель здесь не полная энергия импульса, а температура наружной оболочки: при \(T_c\ll T^*_{{\mathrm{{дис}}}}\) перегретый пар также остается далеко ниже порога диссоциации.
+Водно-паровой слой получает \(E_s\approx{float(energy_funnel["steam_energy_kj_per_m"]):.3f}\,\mathrm{{кДж/м}}\), или \({float(energy_funnel["steam_energy_percent_of_pulse"]):.3f}\,\%\) от импульса. Главный ограничитель здесь не полная энергия импульса, а температура наружной оболочки: при \(T_c\ll T^*_{{\mathrm{{дис}}}}\) перегретый пар также остается далеко ниже принятого порога.
 
 {chemistry_model_text}
 До выхода топлива и оболочки за принятые пределы водно-паровой слой успевает нагреться до \(T_s\approx{max_gas_before_limits_k:.0f}\,\mathrm{{K}}\). Полный расчетный максимум оболочки дает запас \(M_{{\mathrm{{об}}}}=T_{{\mathrm{{lim}},c}}-T_c^{{\max}}\approx{clad_limit_margin_k:.0f}\,\mathrm{{K}}\). Топливо в этой точке еще не является первым ограничением, поскольку \(M_f\approx{fuel_margin_k:.0f}\,\mathrm{{K}}\).
 
 \begin{{table}}[H]
     \centering
-    \caption{{Сводка версии 1: входной импульс и три основных выхода для \(UO_2\)--Zircaloy.}}
+    \caption{{Сводка версии 1: входной импульс и три основных выхода для \(\mathrm{{UO_2}}\)--Zircaloy.}}
     \label{{tab:pipelineScenarioReport}}
     \small
-    \resizebox{{\textwidth}}{{!}}{{%
-    \begin{{tabular}}{{@{{}}p{{4.0cm}}rp{{2.2cm}}p{{2.4cm}}p{{2.2cm}}p{{5.4cm}}@{{}}}}
-    \hline
+    \begin{{tabularx}}{{\textwidth}}{{@{{}}XrrrrX@{{}}}}
+    \toprule
     Сценарий & \(E_{{\mathrm{{вв}}}}\), кДж/м & \(T_{{s,\max}}^{{M>0}}\), K & \(M_{{\mathrm{{об}}}}\), K & \({h2_metric_label}\), г/м & Вывод \\
-    \hline
+    \midrule
     {result_row} \\
-    \hline
-    \end{{tabular}}
-    }}
+    \bottomrule
+    \end{{tabularx}}
 \end{{table}}
 
 {final_reading} Для принятого порога \(T^*_{{\mathrm{{дис}}}}\) температурный запас пара до нарушения пределов равен \(\Delta T_{{\mathrm{{зап}}}}\approx{target_margin_before_limits_k:.0f}\,\mathrm{{K}}\), а запас оболочки в полном расчете равен \(M_{{\mathrm{{об}}}}\approx{clad_limit_margin_k:.0f}\,\mathrm{{K}}\).

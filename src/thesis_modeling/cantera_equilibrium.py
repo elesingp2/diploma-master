@@ -131,7 +131,7 @@ def _import_cantera():
         import cantera as ct
     except ModuleNotFoundError as exc:
         raise CanteraUnavailableError(
-            "Cantera не установлена. Установите зависимость chemistry-extra "
+            "Cantera не установлена. Установите пакет с extra 'chemistry' "
             "или добавьте Cantera в активное Python-окружение."
         ) from exc
     _register_cantera_data_dir(ct)

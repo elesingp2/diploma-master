@@ -6,13 +6,18 @@ PDF := $(BUILD_DIR)/main.pdf
 
 TEXBIN := /Library/TeX/texbin
 PATH_WITH_TEX := $(TEXBIN):$(PATH)
+ifneq ("$(wildcard .venv/bin/python)","")
 PYTHON ?= .venv/bin/python
+else
+PYTHON ?= python3
+endif
 
-.PHONY: help check pipeline-figures pdf pdf-latexmk pdf-xelatex pdf-tectonic clean pull-overleaf push-overleaf push-github
+.PHONY: help check test pipeline-figures pdf pdf-latexmk pdf-xelatex pdf-tectonic clean pull-overleaf push-overleaf push-github
 
 help:
 	@echo "Targets:"
 	@echo "  make check          Check local tools and git remotes"
+	@echo "  make test           Compile Python modules and run smoke tests"
 	@echo "  make pipeline-figures  Regenerate notebook-synced figures and tex fragment"
 	@echo "  make pdf            Build build/latex/main.pdf"
 	@echo "  make pdf-latexmk    Build with latexmk/xelatex"
@@ -32,6 +37,10 @@ check:
 	@echo
 	@echo "LaTeX tools:"
 	@PATH="$(PATH_WITH_TEX)" sh -c 'command -v latexmk || true; command -v xelatex || true; command -v tectonic || true'
+
+test:
+	PYTHONPATH=src $(PYTHON) -m compileall -q src scripts
+	PYTHONPATH=src $(PYTHON) -m unittest discover -s tests
 
 pipeline-figures:
 	@$(PYTHON) scripts/make_fig_fuel_pin_anatomy.py

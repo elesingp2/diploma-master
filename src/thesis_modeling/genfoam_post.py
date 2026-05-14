@@ -25,7 +25,7 @@ def integrate_wall_heat_flux_j_per_m(
     heat_flux_w_m2: np.ndarray,
     scenario: Scenario,
 ) -> np.ndarray:
-    """Интегрирует поток через наружную поверхность оболочки на метр ТВЭЛа."""
+    """Интегрирует поток через наружную поверхность оболочки на метр твэла."""
     outer_area_m2_per_m = 2.0 * np.pi * scenario.geometry.clad_outer_radius_m
     power_w_per_m = heat_flux_w_m2 * outer_area_m2_per_m
     energy_j_per_m = np.zeros_like(time_s, dtype=float)

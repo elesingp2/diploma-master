@@ -15,10 +15,13 @@ from .scenarios import AnnularWaterLayer, Material, PinGeometry, Pulse, Scenario
 from .scenarios import build_annular_water_scenario
 from .validation import validate_physical_consistency
 from .wall_coupled_water import WallHeatTransfer, apply_wall_coupled_water_model
+from .water_state import water_energy_for_temperature_j_per_m
 
 
 BASE_HFC_ENERGY_J_PER_M = 480e3
 BASE_PULSE_DURATION_S = 0.20
+DELTA_H_DISSOCIATION_J_PER_MOL = 241.93e3
+H2_MOLAR_MASS_KG_PER_MOL = 2.01588e-3
 
 
 @dataclass(frozen=True)
@@ -127,7 +130,7 @@ def plot_pipeline_v4_structured_tvel(runs: list[PipelineV4Run]):
 
     axes[0].axhline(fuel_limit, color="#202020", lw=1.1, ls=":", label="предел кермета")
     axes[0].axhline(clad_limit, color="#6b4e9b", lw=1.1, ls="-.", label="предел W")
-    axes[0].set_title("GeN-Foam: измененная структура ТВЭЛа")
+    axes[0].set_title("GeN-Foam: измененная структура твэла")
     axes[0].set_xlabel("время, с")
     axes[0].set_ylabel("температура, K")
     axes[0].grid(color="#d7d7d7", lw=0.8)
@@ -221,6 +224,18 @@ def _structured_tvel_diagnostics(
     water_energy = np.asarray(result["water_energy_j_per_m"], dtype=float)
     pulse = np.asarray(result["pulse_energy_j_per_m"], dtype=float)
     h2 = np.asarray(chemistry["hydrogen_kg_per_m"], dtype=float)
+    target_energy_j_per_m = water_energy_for_temperature_j_per_m(
+        scenario.chemistry_threshold_k,
+        scenario.water,
+    )
+    dissociation_energy_j_per_m = max(0.0, float(np.max(water_energy)) - target_energy_j_per_m)
+    h2_energy_cap_mg_per_m = (
+        dissociation_energy_j_per_m
+        / DELTA_H_DISSOCIATION_J_PER_MOL
+        * H2_MOLAR_MASS_KG_PER_MOL
+        * 1e6
+    )
+    peak_h2_mg_per_m = float(np.max(h2) * 1e6)
     return {
         "max_fuel_k": float(np.max(fuel)),
         "max_clad_k": float(np.max(clad)),
@@ -236,14 +251,18 @@ def _structured_tvel_diagnostics(
         "steam_energy_percent_of_pulse": float(
             100.0 * np.max(water_energy) / max(float(pulse[-1]), 1.0)
         ),
-        "peak_h2_mg_per_m": float(np.max(h2) * 1e6),
+        "required_energy_to_threshold_kj_per_m": target_energy_j_per_m / 1e3,
+        "dissociation_energy_cap_kj_per_m": dissociation_energy_j_per_m / 1e3,
+        "peak_h2_mg_per_m": peak_h2_mg_per_m,
+        "h2_energy_cap_mg_per_m": h2_energy_cap_mg_per_m,
+        "h2_admissible_mg_per_m": min(peak_h2_mg_per_m, h2_energy_cap_mg_per_m),
         "peak_h2_mole_percent": float(np.max(chemistry["h2_mole_fraction"]) * 100.0),
     }
 
 
 def _status(run: PipelineV4Run) -> str:
     if run.diagnostics["target_reached"] and run.diagnostics["thermal_ok"]:
-        return "кандидатный режим: паровое окно достигнуто без перегрева"
+        return "кандидат: окно достигнуто без превышения принятого теплового предела"
     if run.diagnostics["target_reached"]:
         return "окно достигнуто только при нарушении тепловых пределов"
     if not run.diagnostics["thermal_ok"]:
@@ -258,13 +277,15 @@ def _write_pipeline_v4_tex(path: Path, runs: list[PipelineV4Run]) -> None:
         rows.append(
             " & ".join(
                 [
-                    str(run.report["case"]),
-                    _format_float(float(run.spec.power_scale), 0),
+                    rf"\({_format_float(float(run.spec.power_scale), 0)}P_0\)",
                     _format_float(float(diag["max_fuel_k"]), 0),
                     _format_float(float(diag["max_clad_k"]), 0),
                     _format_float(float(diag["max_steam_k"]), 0),
+                    _format_float(float(diag["fuel_margin_k"]), 0),
+                    _format_float(float(diag["clad_margin_k"]), 0),
                     _format_float(float(diag["steam_energy_kj_per_m"]), 2),
                     _format_float(float(diag["peak_h2_mg_per_m"]), 2),
+                    _format_float(float(diag["h2_admissible_mg_per_m"]), 2),
                     _status(run),
                 ]
             )
@@ -273,7 +294,7 @@ def _write_pipeline_v4_tex(path: Path, runs: list[PipelineV4Run]) -> None:
 
     text = rf"""\subsection{{V4: изменение структуры твэла}}
 
-Расчет V4 проверяет не увеличение мощности в прежнем твэле, а изменение пути теплопередачи. Топливо заменено расчетным кольцевым высокотеплопроводным керметным слоем \(r=3.40\text{{--}}4.00\,\mathrm{{мм}}\). Между активным слоем и оболочкой оставлен почти связанный контакт \(h_g=10^6\,\mathrm{{Вт/(м^2\,K)}}\), W-оболочка уменьшена до \(0.195\,\mathrm{{мм}}\), а локальный слой воды у стенки принят равным \(100\,\mu\mathrm{{m}}\). Энергия по-прежнему вводится только в топливо GeN-Foam; отдельного нагревателя пара нет.
+Расчет V4 проверяет не увеличение мощности в прежнем твэле, а изменение пути теплопередачи. Топливо заменено расчетным кольцевым высокотеплопроводным керметным слоем \(r=3.40\text{{--}}4.00\,\mathrm{{мм}}\). Внутренняя граница \(r=3.40\,\mathrm{{мм}}\) задана адиабатической как расчетное приближение инертного внутреннего сердечника или симметричного эквивалента; теплоотвод через нее в этой версии не моделируется. Между активным слоем и оболочкой оставлен почти связанный контакт \(h_g=10^6\,\mathrm{{Вт/(м^2\,K)}}\), W-оболочка уменьшена до \(0.195\,\mathrm{{мм}}\), а локальный слой воды у стенки принят равным \(100\,\mu\mathrm{{m}}\). Энергия по-прежнему вводится только в топливо GeN-Foam; отдельного нагревателя пара нет. Обозначение \(P_0\) здесь сохраняет нормировку V3: \(1P_0\) соответствует \(480\,\mathrm{{кДж/м}}\) за \(0.2\,\mathrm{{с}}\).
 
 \begin{{figure}}[H]
     \centering
@@ -287,17 +308,26 @@ def _write_pipeline_v4_tex(path: Path, runs: list[PipelineV4Run]) -> None:
     \caption{{Проверка измененной структуры твэла: нагрев только через топливо.}}
     \label{{tab:pipelineV4StructuredTvel}}
     \footnotesize
-    \resizebox{{\textwidth}}{{!}}{{%
-    \begin{{tabular}}{{@{{}}p{{3.7cm}}rrrrrrp{{5.1cm}}@{{}}}}
-    \hline
-    Сценарий & \(P/P_0\) & \(T_f^{{\max}}\), K & \(T_W^{{\max}}\), K & \(T_s^{{\max}}\), K & \(E'_w\), кДж/м & \(m_{{H_2}}\), мг/м & Вывод \\
-    \hline
+    \begin{{tabularx}}{{\textwidth}}{{@{{}}crrrrrrrrX@{{}}}}
+    \toprule
+    \(P/P_0\) & \(T_f^{{\max}}\), K & \(T_W^{{\max}}\), K & \(T_s^{{\max}}\), K & \(M_f\), K & \(M_W\), K & \(E'_w\), кДж/м & \(m_{{H_2}}^{{eq}}\), мг/м & \(m_{{H_2}}^{{\mathrm{{доп}}}}\), мг/м & Статус \\
+    \midrule
     {chr(10).join("    " + row for row in rows)}
-    \hline
-    \end{{tabular}}
-    }}
+    \bottomrule
+    \end{{tabularx}}
 \end{{table}}
 
-Положительный расчетный режим возникает только после изменения геометрии теплопередачи и уменьшения локальной массы воды у стенки. При \(20P_0\) структура остается холоднее пределов, но пар не достигает \(T^*_{{\mathrm{{дис}}}}\). При \(28P_0\) максимум пара составляет около \(3410\,\mathrm{{K}}\), максимум топлива около \(3470\,\mathrm{{K}}\), а W-оболочки около \(3430\,\mathrm{{K}}\). Эти значения ниже принятого теплового предела \(3695\,\mathrm{{K}}\), поэтому в рамках текущей тепловой модели появляется кандидатный режим образования \(H_2\). Он не является проектом реактора: керметный слой, W-стенка в паре, механика тонкой оболочки, нейтроника, радиационная граница и химическая кинетика требуют отдельной квалификации.
+Для \(H_2\) в таблице разделены две величины. \(m_{{H_2}}^{{eq}}\) -- равновесный индикатор Cantera при достигнутых \(T_s\) и \(p_s\). Энергетически допустимая верхняя оценка дополнительно ограничена остатком после нагрева воды до принятого порога:
+\[
+m_{{H_2}}^{{\mathrm{{доп}}}}=
+\min\left(
+m_{{H_2}}^{{eq}},
+\frac{{Q_{{\mathrm{{дис}}}}^{{\max}}}}{{\Delta H_{{\mathrm{{дис}}}}}}M_{{H_2}}
+\right),
+\qquad
+Q_{{\mathrm{{дис}}}}^{{\max}}=\max\left(0,E'_w-E'_{{w,*}}\right).
+\]
+
+Положительный расчетный режим возникает только после изменения геометрии теплопередачи и уменьшения локальной массы воды у стенки. При \(20P_0\) структура остается холоднее пределов, но пар не достигает \(T^*_{{\mathrm{{дис}}}}\). При \(28P_0\) максимум пара составляет около \(3410\,\mathrm{{K}}\), максимум топлива около \(3470\,\mathrm{{K}}\), а W-оболочки около \(3430\,\mathrm{{K}}\). Принятый предел \(3695\,\mathrm{{K}}\) является расчетным материаловым ориентиром, привязанным к температуре плавления W и W-карбидного суррогата; это не эксплуатационный предел с ресурсным запасом. Поэтому в рамках текущей тепловой модели появляется только кандидатный режим образования \(H_2\). Он не является проектом реактора: керметный слой, W-стенка в паре, механика тонкой оболочки, нейтроника, радиационная граница и химическая кинетика требуют отдельной квалификации.
 """
     path.write_text(text, encoding="utf-8")

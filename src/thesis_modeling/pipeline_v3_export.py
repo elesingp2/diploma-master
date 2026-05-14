@@ -52,7 +52,7 @@ class PipelineV3Run:
 def pipeline_v3_specs() -> list[PipelineV3Spec]:
     return [
         PipelineV3Spec(
-            label=r"\(HfC\)--W, \(4P_0\), \(1.0\,\mathrm{s}\)",
+            label=r"\(\mathrm{HfC}\)--W, \(4P_0\), \(1.0\,\mathrm{s}\)",
             fuel_name="HfC surrogate",
             clad_name="Tungsten",
             genfoam_case_path=str(
@@ -67,7 +67,7 @@ def pipeline_v3_specs() -> list[PipelineV3Spec]:
             role="мягкий длинный импульс: контроль безопасного, но холодного режима",
         ),
         PipelineV3Spec(
-            label=r"\(HfC\)--W, \(12P_0\), \(1.0\,\mathrm{s}\)",
+            label=r"\(\mathrm{HfC}\)--W, \(12P_0\), \(1.0\,\mathrm{s}\)",
             fuel_name="HfC surrogate",
             clad_name="Tungsten",
             genfoam_case_path=str(
@@ -82,7 +82,7 @@ def pipeline_v3_specs() -> list[PipelineV3Spec]:
             role=r"проверка гипотезы о более длинном импульсе при той же суммарной энергии, что у \(60P_0\cdot0.2\,\mathrm{s}\)",
         ),
         PipelineV3Spec(
-            label=r"\(HfC\)--W, \(60P_0\), \(0.2\,\mathrm{s}\)",
+            label=r"\(\mathrm{HfC}\)--W, \(60P_0\), \(0.2\,\mathrm{s}\)",
             fuel_name="HfC surrogate",
             clad_name="Tungsten",
             genfoam_case_path=str(
@@ -94,7 +94,7 @@ def pipeline_v3_specs() -> list[PipelineV3Spec]:
             power_scale=60.0,
             pulse_duration_s=0.2,
             layer_thickness_m=2.0e-4,
-            role="короткий жесткий импульс: максимум прогрева топлива при той же геометрии ТВЭЛа",
+            role="короткий жесткий импульс: максимум прогрева топлива при той же геометрии твэла",
         ),
     ]
 
@@ -162,7 +162,7 @@ def plot_pipeline_v3_tvel_heating(runs: list[PipelineV3Run]):
 
     axes[0].axhline(fuel_limit, color="#202020", lw=1.1, ls=":", label="предел HfC")
     axes[0].axhline(clad_limit, color="#6b4e9b", lw=1.1, ls="-.", label="предел W")
-    axes[0].set_title("GeN-Foam: нагрев только ТВЭЛа")
+    axes[0].set_title("GeN-Foam: нагрев только твэла")
     axes[0].set_xlabel("время, с")
     axes[0].set_ylabel("температура, K")
     axes[0].grid(color="#d7d7d7", lw=0.8)
@@ -273,12 +273,19 @@ def _material_by_name(materials: list[Material], name: str) -> Material:
 
 
 def _short_label(label: str) -> str:
-    return label.replace(r"\(", "").replace(r"\)", "").split(",")[1].strip()
+    return (
+        label.replace(r"\(", "")
+        .replace(r"\)", "")
+        .replace(r"\mathrm{", "")
+        .replace("}", "")
+        .split(",")[1]
+        .strip()
+    )
 
 
 def _status(run: PipelineV3Run) -> str:
     if run.diagnostics["target_reached"] and run.diagnostics["reactor_thermal_ok"]:
-        return "целевой режим достигнут без нарушения тепловых пределов"
+        return "окно достигнуто без превышения принятого теплового предела"
     if run.diagnostics["target_reached"]:
         return "паровое окно достигнуто, но реакторная часть перегрета"
     if not run.diagnostics["reactor_thermal_ok"]:
@@ -293,9 +300,8 @@ def _write_pipeline_v3_tex(path: Path, runs: list[PipelineV3Run]) -> None:
         rows.append(
             " & ".join(
                 [
-                    str(run.report["case"]),
+                    rf"\({_format_float(float(run.spec.power_scale), 0)}P_0\)",
                     _format_float(float(run.spec.pulse_duration_s), 2),
-                    _format_float(float(run.spec.power_scale), 0),
                     _format_float(float(diag["max_fuel_k"]), 0),
                     _format_float(float(diag["max_clad_k"]), 0),
                     _format_float(float(diag["max_steam_k"]), 0),
@@ -307,7 +313,7 @@ def _write_pipeline_v3_tex(path: Path, runs: list[PipelineV3Run]) -> None:
             + r" \\"
         )
 
-    text = rf"""\subsection{{V3: нагрев пара только через ТВЭЛ}}
+    text = rf"""\subsection{{V3: нагрев пара только через твэл}}
 
 По требованию физической постановки V3 исключает отдельный нагреватель пара. Вся энергия вводится в топливо GeN-Foam через \texttt{{nuclearFuelPin}}, затем проходит через топливо, зазор, W-оболочку и только после этого попадает в локальный водный слой. Python-часть больше не задает долю импульса, дошедшую до воды. Она интегрирует поток от наружной стенки:
 \[
@@ -316,31 +322,34 @@ def _write_pipeline_v3_tex(path: Path, runs: list[PipelineV3Run]) -> None:
 \qquad
 T_w \le T_{{\mathrm{{об}}}}.
 \]
-Коэффициент \(h_{{\mathrm{{eff}}}}\) выбирается по текущей фазе воды: однофазный нагрев, кипение или перегретый пар; в сухом паре добавляется радиационная поправка W-стенка--пар. Поэтому модель проверяет именно вопрос: может ли нагретый ТВЭЛ сам довести воду или пар до \(T^*_{{\mathrm{{дис}}}}\), не разрушая топливо и оболочку.
+Коэффициент \(h_{{\mathrm{{eff}}}}\) выбирается по текущей фазе воды: однофазный нагрев, кипение или перегретый пар; в сухом паре добавляется радиационная поправка W-стенка--пар. Поэтому модель проверяет именно вопрос: может ли нагретый твэл сам довести воду или пар до \(T^*_{{\mathrm{{дис}}}}\), не разрушая топливо и оболочку.
+
+Здесь \(P_0\) -- базовый нормировочный уровень линейной мощности в серии GeN-Foam для \(\mathrm{{HfC}}\)--W. В таблице множитель \(P/P_0\) задает амплитуду импульса, а полный энерговвод считается как
+\[
+E_{{\mathrm{{вв}}}}=480\,\mathrm{{кДж/м}}\cdot\frac{{P}}{{P_0}}\cdot\frac{{\tau_p}}{{0.2\,\mathrm{{с}}}}.
+\]
 
 \begin{{figure}}[H]
     \centering
     \includegraphics[width=0.88\textwidth]{{figures/pipeline_v3_tvel_heating.png}}
-    \caption{{V3 без отдельного нагрева пара: GeN-Foam греет только ТВЭЛ, а вода получает энергию через наружную W-оболочку. Длинный импульс улучшает теплопередачу, но в текущей геометрии целевое паровое окно не открывается без перегрева топлива.}}
+    \caption{{V3 без отдельного нагрева пара: GeN-Foam греет только твэл, а вода получает энергию через наружную W-оболочку. Длинный импульс улучшает теплопередачу, но в текущей геометрии целевое паровое окно не открывается до превышения принятого теплового предела топлива.}}
     \label{{fig:pipelineV3TvelHeating}}
 \end{{figure}}
 
 \begin{{table}}[H]
     \centering
-    \caption{{Проверка гипотезы о длительности импульса для нагрева пара через ТВЭЛ.}}
+    \caption{{Проверка гипотезы о длительности импульса для нагрева пара через твэл.}}
     \label{{tab:pipelineV3TvelHeating}}
     \footnotesize
-    \resizebox{{\textwidth}}{{!}}{{%
-    \begin{{tabular}}{{@{{}}p{{4.0cm}}rrrrrrrp{{4.8cm}}@{{}}}}
-    \hline
-    Сценарий & \(\tau_p\), с & \(P/P_0\) & \(T_f^{{\max}}\), K & \(T_W^{{\max}}\), K & \(T_s^{{\max}}\), K & \(\eta_s\), \% & \(m_{{H_2}}\), мг/м & Вывод \\
-    \hline
+    \begin{{tabularx}}{{\textwidth}}{{@{{}}crrrrrrX@{{}}}}
+    \toprule
+    \(P/P_0\) & \(\tau_p\), с & \(T_f^{{\max}}\), K & \(T_W^{{\max}}\), K & \(T_s^{{\max}}\), K & \(\eta_s\), \% & \(m_{{H_2}}^{{eq}}\), мг/м & Статус \\
+    \midrule
     {chr(10).join(rows)}
-    \hline
-    \end{{tabular}}
-    }}
+    \bottomrule
+    \end{{tabularx}}
 \end{{table}}
 
-Расчет показывает, почему простое увеличение длительности импульса не является автоматическим решением. Более длинный импульс действительно дает теплу больше времени пройти к W-оболочке и водному слою, но температура пара остается ограничена температурой наружной стенки. В коротком жестком импульсе топливо перегревается раньше, чем оболочка и пар достигают области диссоциации. В растянутом импульсе теплопередача мягче, но целевой уровень \(T_s\approx3273\,\mathrm{{K}}\) все равно не достигается. Следовательно, в текущей геометрии одного ТВЭЛа положительный водородный режим через один только нагрев топлива не получается; для продолжения нужны не отдельный нагреватель пара, а изменение самой теплопередающей геометрии ТВЭЛа, например уменьшение теплового сопротивления зазора, другой радиус/толщина активного слоя или отдельная квалифицированная стенка горячего канала.
+Расчет показывает, почему простое увеличение длительности импульса не является автоматическим решением. Более длинный импульс действительно дает теплу больше времени пройти к W-оболочке и водному слою, но температура пара остается ограничена температурой наружной стенки. В коротком жестком импульсе топливо перегревается раньше, чем оболочка и пар достигают принятого целевого уровня. В растянутом импульсе теплопередача мягче, но целевой уровень \(T_s\approx3273\,\mathrm{{K}}\) все равно не достигается. Следовательно, в текущей геометрии одного твэла положительный водородный режим через один только нагрев топлива не получается; для продолжения нужны не отдельный нагреватель пара, а изменение самой теплопередающей геометрии твэла, например уменьшение теплового сопротивления зазора, другой радиус/толщина активного слоя или отдельная квалифицированная стенка горячего канала.
 """
     path.write_text(text, encoding="utf-8")
