@@ -1,37 +1,21 @@
-# Дипломная расчетная модель
+# Diploma Modeling Notebooks
 
-Репозиторий содержит текст диплома и воспроизводимую Python-обвязку для расчетной цепочки GeN-Foam -- Cantera -- LaTeX. Основная задача модели -- проверить, может ли импульсный энерговвод в твэл передать достаточно энергии в локальный водно-паровой слой до превышения температурных пределов топлива и оболочки.
+This repository is a compact public snapshot for the diploma modeling notebooks.
+It keeps only the files needed to open and reproduce the notebook calculations:
 
-## Структура
+- `notebooks/` -- executed notebooks with saved outputs for GitHub preview;
+- `src/thesis_modeling/` -- reusable functions used by the notebooks;
+- `data/genfoam/` -- compact GeN-Foam thermal time series used as notebook input;
+- `pyproject.toml` -- Python dependencies and package metadata.
 
-- `main.tex` -- основной текст диплома.
-- `pipeline-theory.md` -- рабочее описание физической постановки и формул.
-- `src/thesis_modeling/` -- импортируемый Python-пакет: сценарии, чтение рядов GeN-Foam, водная сторона, Cantera-оценка, отчеты и графики.
-- `notebooks/` -- компактные расчетные ноутбуки без сохраненных выводов.
-- `data/genfoam/` -- малые CSV-ряды, нужные для воспроизведения текущих сценариев.
-- `figures/` -- отслеживаемые рисунки и LaTeX-фрагменты, подключаемые в `main.tex`.
-- `scripts/` -- команды генерации рисунков и отчетных фрагментов.
-- `tests/` -- smoke-тесты ключевого расчетного контракта.
-
-## Быстрый старт
+## Reproduce
 
 ```bash
 python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install -e '.[chemistry,notebooks]'
-make test
-make pipeline-figures
-make pdf
+python -m jupyter nbconvert --to notebook --execute --inplace notebooks/*.ipynb
 ```
 
-`make pipeline-figures` требует Cantera для полной равновесной химии. Если `.venv/bin/python` существует, Makefile использует его; иначе берется системный `python3`.
-
-## Перед пушем
-
-```bash
-make test
-git diff --check
-git status --short
-```
-
-Служебные каталоги `.venv/`, `build/`, `outputs/`, `external/`, `materials/` и Overleaf-кэш исключены из Git.
+Cantera is required for the equilibrium `H2` estimates. Generated figures, LaTeX
+drafts, agent state, local environments, and other process artifacts are ignored.

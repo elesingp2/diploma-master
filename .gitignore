@@ -1,16 +1,54 @@
+# Local OS/editor noise
 .DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Agent, assistant, and workspace process state
 .codex/
+.agents/
+.claude/
+.cursor/
+.mcp/
+.aider*
+AGENTS.md
+TASK.md
+VISUALIZATION_MAP.md
+pipeline-theory.md
+Makefile
+scripts/
+tests/
+*.md
+!README.md
+
+# Local Python environments and caches
 .venv/
-build/
-outputs/
-overleafmcp/
-external/
-materials/
-main.pdf
+venv/
+env/
 *.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 .ipynb_checkpoints/
 __pycache__/
-*.pyc
+*.py[cod]
+
+# Generated artifacts and reports
+build/
+outputs/
+artifacts/
+reports/
+presentations/
+figures/
+main.tex
+main.pdf
+*.pdf
+*.pptx
+*.docx
+*.xlsx
+
+# LaTeX generated files
 *.aux
 *.bbl
 *.bcf
@@ -23,3 +61,20 @@ __pycache__/
 *.log
 *.out
 *.toc
+
+# Large local reference trees, external checkouts, and sync caches
+overleafmcp/
+external/
+materials/
+
+# Keep the public demo surface explicit
+!notebooks/
+!notebooks/*.ipynb
+!src/
+!src/thesis_modeling/
+!src/thesis_modeling/*.py
+!data/
+!data/genfoam/
+!data/genfoam/**/*.csv
+!pyproject.toml
+!.gitignore
