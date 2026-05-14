@@ -90,14 +90,14 @@ def compute_python_hydrogen_proxy(
     result: dict[str, Any],
     scenario: Scenario,
 ) -> CanteraHydrogenResult:
-    """Дает грубую Python-оценку H2 для fallback без Cantera."""
+    """Считает пороговую оценку H2 без Cantera."""
     temperature_k = np.asarray(result["water_temperature_k"], dtype=float)
     steam_mass_kg_per_m = np.asarray(result["steam_mass_kg_per_m"], dtype=float)
     pressure_pa = _pressure_series(result, scenario, temperature_k.size)
     excess_k = np.maximum(temperature_k - scenario.chemistry_threshold_k, 0.0)
 
-    # Это не замена химической термодинамики: дробь только монотонно включает H2
-    # выше выбранного температурного ориентира и ограничена стехиометрией воды.
+    # Оценка не заменяет равновесную термодинамику: доля H2 монотонно растет
+    # выше температурного ориентира и ограничена стехиометрией воды.
     dissociation_fraction = 0.10 * (1.0 - np.exp(-excess_k / 650.0))
     dissociation_fraction = np.clip(dissociation_fraction, 0.0, 0.10)
     h2_mole_fraction = dissociation_fraction / (1.0 + 0.5 * dissociation_fraction)
@@ -122,7 +122,7 @@ def compute_python_hydrogen_proxy(
         "peak_hydrogen_g_per_m": float(np.max(hydrogen_kg_per_m) * 1e3),
         "peak_water_temperature_k": float(np.max(temperature_k)),
         "peak_h2_mole_fraction": float(np.max(h2_mole_fraction)),
-        "note": "Fallback без Cantera: пороговая монотонная оценка, не равновесная термодинамика.",
+        "note": "Расчет без Cantera: пороговая монотонная оценка, не равновесная термодинамика.",
     }
 
 

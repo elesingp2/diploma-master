@@ -341,7 +341,9 @@ E_{{\mathrm{{вв}}}}=480\,\mathrm{{кДж/м}}\cdot\frac{{P}}{{P_0}}\cdot\frac{
     \caption{{Проверка гипотезы о длительности импульса для нагрева пара через твэл.}}
     \label{{tab:pipelineV3TvelHeating}}
     \footnotesize
-    \begin{{tabularx}}{{\textwidth}}{{@{{}}crrrrrrX@{{}}}}
+    \setlength{{\tabcolsep}}{{2pt}}
+    \renewcommand{{\arraystretch}}{{1.12}}
+    \begin{{tabularx}}{{\textwidth}}{{@{{}}>{{\centering\arraybackslash}}p{{0.06\textwidth}}>{{\raggedleft\arraybackslash}}p{{0.07\textwidth}}>{{\raggedleft\arraybackslash}}p{{0.09\textwidth}}>{{\raggedleft\arraybackslash}}p{{0.09\textwidth}}>{{\raggedleft\arraybackslash}}p{{0.09\textwidth}}>{{\raggedleft\arraybackslash}}p{{0.07\textwidth}}>{{\raggedleft\arraybackslash}}p{{0.12\textwidth}}L@{{}}}}
     \toprule
     \(P/P_0\) & \(\tau_p\), с & \(T_f^{{\max}}\), K & \(T_W^{{\max}}\), K & \(T_s^{{\max}}\), K & \(\eta_s\), \% & \(m_{{H_2}}^{{eq}}\), мг/м & Статус \\
     \midrule

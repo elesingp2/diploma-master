@@ -185,17 +185,17 @@ def _source_summary(runs: list[PipelineV2Run]) -> str:
         )
     if sources == {"python_fallback"}:
         return (
-            r"В этом прогоне включен явный \texttt{python\_fallback}: тепловые ряды "
+            r"В этом прогоне использован резервный расчет \texttt{python\_fallback}: тепловые ряды "
             "получены трехузловой моделью, потому что пригодные для этих "
             "материальных сценариев ряды GeN-Foam не были доступны."
         )
-    return "В таблице смешаны внешние GeN-Foam-ряды и явно помеченный fallback."
+    return "В таблице смешаны внешние GeN-Foam-ряды и резервный расчет Python."
 
 
 def _chemistry_summary(runs: list[PipelineV2Run]) -> str:
     if all(bool(run.chemistry.get("uses_cantera")) for run in runs):
         return r"\(m_{H_2}^{eq}\) по равновесному расчету Cantera."
-    return r"\(m_{H_2}^{proxy}\) по пороговой fallback-оценке без Cantera."
+    return r"\(m_{H_2}^{proxy}\) по пороговой оценке без Cantera."
 
 
 def _write_pipeline_v2_tex(path: Path, runs: list[PipelineV2Run]) -> None:
@@ -238,7 +238,9 @@ def _write_pipeline_v2_tex(path: Path, runs: list[PipelineV2Run]) -> None:
     \caption{{Отборочные сценарии для новой материальной структуры.}}
     \label{{tab:pipelineV2MaterialScenarios}}
     \footnotesize
-    \begin{{tabularx}}{{\textwidth}}{{@{{}}XrrcXX@{{}}}}
+    \setlength{{\tabcolsep}}{{3pt}}
+    \renewcommand{{\arraystretch}}{{1.12}}
+    \begin{{tabularx}}{{\textwidth}}{{@{{}}LYYZLL@{{}}}}
     \toprule
     Сценарий & \(E_{{\mathrm{{вв}}}}\), кДж/м & \(T_s^{{\max}}\), K & Окно до пределов & Класс результата & Роль в дипломе \\
     \midrule

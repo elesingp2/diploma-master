@@ -82,7 +82,7 @@ def canonicalize_thermal_series(
     source: str,
     provenance: str | Path | None = None,
 ) -> dict[str, Any]:
-    """Приводит выгрузку GeN-Foam к контракту отчетного пайплайна."""
+    """Приводит выгрузку GeN-Foam к единому расчетному формату."""
     normalized = {
         str(key): np.asarray(value, dtype=float).reshape(-1)
         for key, value in columns.items()

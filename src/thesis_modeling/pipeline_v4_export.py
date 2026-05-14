@@ -307,8 +307,10 @@ def _write_pipeline_v4_tex(path: Path, runs: list[PipelineV4Run]) -> None:
     \centering
     \caption{{Проверка измененной структуры твэла: нагрев только через топливо.}}
     \label{{tab:pipelineV4StructuredTvel}}
-    \footnotesize
-    \begin{{tabularx}}{{\textwidth}}{{@{{}}crrrrrrrrX@{{}}}}
+    \scriptsize
+    \setlength{{\tabcolsep}}{{2pt}}
+    \renewcommand{{\arraystretch}}{{1.12}}
+    \begin{{tabularx}}{{\textwidth}}{{@{{}}>{{\centering\arraybackslash}}p{{0.055\textwidth}}>{{\raggedleft\arraybackslash}}p{{0.075\textwidth}}>{{\raggedleft\arraybackslash}}p{{0.075\textwidth}}>{{\raggedleft\arraybackslash}}p{{0.075\textwidth}}>{{\raggedleft\arraybackslash}}p{{0.065\textwidth}}>{{\raggedleft\arraybackslash}}p{{0.065\textwidth}}>{{\raggedleft\arraybackslash}}p{{0.09\textwidth}}>{{\raggedleft\arraybackslash}}p{{0.10\textwidth}}>{{\raggedleft\arraybackslash}}p{{0.10\textwidth}}L@{{}}}}
     \toprule
     \(P/P_0\) & \(T_f^{{\max}}\), K & \(T_W^{{\max}}\), K & \(T_s^{{\max}}\), K & \(M_f\), K & \(M_W\), K & \(E'_w\), кДж/м & \(m_{{H_2}}^{{eq}}\), мг/м & \(m_{{H_2}}^{{\mathrm{{lim}}}}\), мг/м & Статус \\
     \midrule

@@ -30,7 +30,7 @@ def apply_wall_coupled_water_model(
     scenario: Scenario,
     heat_transfer: WallHeatTransfer | None = None,
 ) -> dict[str, Any]:
-    """Считает воду у твэла только через поток от наружной стенки."""
+    """Считает водный слой по потоку от наружной стенки твэла."""
     model = heat_transfer or WallHeatTransfer(
         liquid_htc_w_m2_k=scenario.water.heat_transfer_coefficient_w_m2_k,
     )

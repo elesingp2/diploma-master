@@ -41,7 +41,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 def repo_relative_path(env_name: str, default: str) -> Path:
-    """Возвращает абсолютный путь, считая относительные значения от корня проекта."""
+    """Возвращает абсолютный путь для входных данных проекта."""
     raw_path = Path(os.environ.get(env_name, default))
     return raw_path if raw_path.is_absolute() else PROJECT_ROOT / raw_path
 
@@ -63,7 +63,7 @@ class ScenarioRun:
 
 
 def build_notebook_baseline_scenario():
-    """Возвращает базовый сценарий для первого ноутбука и LaTeX-экспорта."""
+    """Возвращает базовый сценарий для версии 1."""
     geometry = PinGeometry(
         fuel_radius_m=4.00e-3,
         gap_outer_radius_m=4.08e-3,
@@ -231,7 +231,7 @@ def _thermal_source_phrases(result: dict[str, Any]) -> tuple[str, str]:
     if source == "genfoam":
         return "тепловой ряд GeN-Foam", "по выгруженному ряду GeN-Foam"
     if source == "python_fallback":
-        return "явный трехузловой Python fallback", "по расчетному ряду fallback"
+        return "резервный трехузловой расчет Python", "по резервному расчетному ряду"
     return "внешний тепловой ряд", "по входному тепловому ряду"
 
 
@@ -243,7 +243,7 @@ T_s(t),\quad p_s(t),\quad X_0=\{H_2O:1\},
 \qquad
 m_{H_2}^{eq}=n_{H_2}^{eq}M_{H_2}.
 \]"""
-    return r"""Химический блок в этом прогоне не является расчетом Cantera: для явно включенного fallback используется пороговая верхняя оценка \(H_2\), ограниченная стехиометрическим запасом воды:
+    return r"""Химический блок в этом прогоне не является расчетом Cantera: используется пороговая верхняя оценка \(H_2\), ограниченная стехиометрическим запасом воды:
 \[
 T_s(t),\quad p_s(t),\quad m_s'(t)
 \;\longrightarrow\;
@@ -395,8 +395,10 @@ j\in\{{f,c,s\}}.
     \centering
     \caption{{Энергетическая воронка версии 1 к концу расчета. Величины нормированы на \(E_{{\mathrm{{вв}}}}={summary["pulse_energy_kj_per_m"]:.0f}\,\mathrm{{кДж/м}}\).}}
     \label{{tab:pipelineEnergyFunnel}}
-    \small
-    \begin{{tabularx}}{{\textwidth}}{{@{{}}Xrrrrr@{{}}}}
+    \footnotesize
+    \setlength{{\tabcolsep}}{{3pt}}
+    \renewcommand{{\arraystretch}}{{1.12}}
+    \begin{{tabularx}}{{\textwidth}}{{@{{}}>{{\raggedright\arraybackslash}}p{{0.16\textwidth}}YYYYY@{{}}}}
     \toprule
     Звено & Накоплено или не прошло, кДж/м & от \(E_{{\mathrm{{вв}}}}\), \% & от входа звена, \% & Прошло дальше, кДж/м & от \(E_{{\mathrm{{вв}}}}\), \% \\
     \midrule
@@ -414,8 +416,10 @@ j\in\{{f,c,s\}}.
     \centering
     \caption{{Сводка версии 1: входной импульс и три основных выхода для \(\mathrm{{UO_2}}\)--Zircaloy.}}
     \label{{tab:pipelineScenarioReport}}
-    \small
-    \begin{{tabularx}}{{\textwidth}}{{@{{}}XrrrrX@{{}}}}
+    \footnotesize
+    \setlength{{\tabcolsep}}{{3pt}}
+    \renewcommand{{\arraystretch}}{{1.12}}
+    \begin{{tabularx}}{{\textwidth}}{{@{{}}>{{\raggedright\arraybackslash}}p{{0.20\textwidth}}YYYY>{{\raggedright\arraybackslash}}p{{0.28\textwidth}}@{{}}}}
     \toprule
     Сценарий & \(E_{{\mathrm{{вв}}}}\), кДж/м & \(T_{{s,\max}}^{{M>0}}\), K & \(M_{{\mathrm{{об}}}}\), K & \({h2_metric_label}\), г/м & Вывод \\
     \midrule

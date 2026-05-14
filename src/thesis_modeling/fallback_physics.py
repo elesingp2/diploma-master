@@ -10,7 +10,7 @@ from .water_state import water_state_from_energy
 
 
 def simulate_python_fallback(scenario: Scenario) -> dict[str, Any]:
-    """Считает трехузловой тепловой fallback, если GeN-Foam недоступен."""
+    """Считает резервную трехузловую тепловую модель."""
     time_s = _time_grid(scenario.t_end_s)
     fuel_capacity = _fuel_capacity_j_k_m(scenario)
     clad_capacity = _clad_capacity_j_k_m(scenario)
@@ -66,8 +66,8 @@ def simulate_python_fallback(scenario: Scenario) -> dict[str, Any]:
         scenario,
         source="python_fallback",
         provenance=(
-            "three-node lumped Python fallback; external GeN-Foam thermal "
-            "series is unavailable or not accepted for this scenario"
+            "резервная трехузловая модель Python; внешний тепловой ряд "
+            "GeN-Foam недоступен или не подходит для сценария"
         ),
     )
 

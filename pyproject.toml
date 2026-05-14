@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "thesis-modeling"
 version = "0.1.0"
-description = "Compact modeling pipeline for TVEL heating and water response."
+description = "TVEL heating and water response calculations."
 requires-python = ">=3.10"
 dependencies = [
     "matplotlib",

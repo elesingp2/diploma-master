@@ -1,16 +1,55 @@
 .DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Локальное состояние инструментов и агентов
 .codex/
+.agents/
+.claude/
+.cursor/
+.mcp/
+.aider*
+AGENTS.md
+TASK.md
+VISUALIZATION_MAP.md
+pipeline-theory.md
+*.md
+!README.md
+
+# Python/Jupyter
 .venv/
-build/
-outputs/
-overleafmcp/
-external/
-materials/
-main.pdf
+venv/
+env/
 *.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 .ipynb_checkpoints/
 __pycache__/
-*.pyc
+*.py[cod]
+
+# Черновики, сборки и презентационные артефакты
+Makefile
+scripts/
+tests/
+figures/
+build/
+outputs/
+artifacts/
+reports/
+presentations/
+presentation-work-*/
+*-contact-sheet.png
+*.pptx
+*.docx
+*.xlsx
+
+# Текст диплома и файлы сборки LaTeX не входят в публичный срез кода
+main.tex
+main.pdf
+*.pdf
 *.aux
 *.bbl
 *.bcf
@@ -23,3 +62,21 @@ __pycache__/
 *.log
 *.out
 *.toc
+
+# Локальные внешние деревья и материалы
+overleafmcp/
+external/
+materials/
+
+# Публичный набор репозитория
+!README.md
+!notebooks/
+!notebooks/*.ipynb
+!src/
+!src/thesis_modeling/
+!src/thesis_modeling/*.py
+!data/
+!data/genfoam/
+!data/genfoam/**/*.csv
+!pyproject.toml
+!.gitignore
