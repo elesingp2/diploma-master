@@ -25,13 +25,3 @@ make pdf
 ```
 
 `make pipeline-figures` требует Cantera для полной равновесной химии. Если `.venv/bin/python` существует, Makefile использует его; иначе берется системный `python3`.
-
-## Перед пушем
-
-```bash
-make test
-git diff --check
-git status --short
-```
-
-Служебные каталоги `.venv/`, `build/`, `outputs/`, `external/`, `materials/` и Overleaf-кэш исключены из Git.
